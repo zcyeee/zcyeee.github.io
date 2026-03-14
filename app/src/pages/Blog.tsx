@@ -188,10 +188,10 @@ export function Blog() {
                             <div className="flex flex-col gap-2.5 h-full">
                               {/* Category & Date */}
                               <div className="flex items-center justify-between">
-                                <Badge variant="secondary" className="text-xs">
+                                <Badge variant="secondary" className="text-[13px] md:text-xs">
                                   {post.category}
                                 </Badge>
-                                <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                <span className="text-[13px] md:text-xs text-muted-foreground flex items-center gap-1">
                                   <Calendar className="w-3 h-3" />
                                   {post.date}
                                 </span>
@@ -203,7 +203,7 @@ export function Blog() {
                               </h2>
 
                               {/* Excerpt */}
-                              <p className="text-xs md:text-sm text-muted-foreground leading-relaxed line-clamp-3 flex-1">
+                              <p className="text-sm md:text-sm text-muted-foreground leading-relaxed line-clamp-3 flex-1">
                                 {post.excerpt}
                               </p>
 
@@ -320,24 +320,38 @@ export function Blog() {
               {/* Featured Post */}
               {featuredPost && (
                 <AnimatedSection delay={0.4}>
-                  <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
-                    <CardContent className="p-5">
-                      <Badge className="mb-3">推荐阅读</Badge>
-                      <h3 className="text-base md:text-base font-semibold mb-2">{featuredPost.title}</h3>
-                      <p className="text-xs md:text-sm text-muted-foreground leading-relaxed mb-3 line-clamp-2">
-                        {featuredPost.excerpt}
-                      </p>
-                      <Link
-                        to={`/blog/${featuredPost.slug}${currentPage > 1 ? `?page=${currentPage}` : ''}`}
-                        onClick={rememberScrollPosition}
-                      >
-                        <Button variant="ghost" size="sm" className="gap-1 p-0 h-auto">
-                          阅读全文
-                          <ArrowRight className="w-4 h-4" />
-                        </Button>
-                      </Link>
-                    </CardContent>
-                  </Card>
+                  <motion.div whileHover={{ y: -4 }} transition={{ duration: 0.2 }}>
+                    <Card className="group bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20 hover:shadow-lg transition-all duration-300">
+                      <CardContent className="p-5 flex flex-col gap-3 h-full">
+                        <div className="flex items-center justify-between">
+                          <Badge className="w-fit">推荐阅读</Badge>
+                          <span className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Calendar className="w-3 h-3" />
+                            {featuredPost.date}
+                          </span>
+                        </div>
+                        <h3 className="text-base md:text-base font-semibold group-hover:text-primary transition-colors">{featuredPost.title}</h3>
+                        <p className="text-sm md:text-sm text-muted-foreground leading-relaxed line-clamp-2">
+                          {featuredPost.excerpt}
+                        </p>
+                        <div className="mt-auto flex items-center justify-between">
+                          <Link
+                            to={`/blog/${featuredPost.slug}${currentPage > 1 ? `?page=${currentPage}` : ''}`}
+                            onClick={rememberScrollPosition}
+                          >
+                            <Button variant="ghost" size="sm" className="gap-1 p-0 h-auto">
+                              阅读全文
+                              <ArrowRight className="w-4 h-4" />
+                            </Button>
+                          </Link>
+                          <span className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {featuredPost.readTime}
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
                 </AnimatedSection>
               )}
             </div>

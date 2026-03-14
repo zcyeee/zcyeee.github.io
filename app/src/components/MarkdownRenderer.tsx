@@ -14,7 +14,7 @@ interface MarkdownRendererProps {
 
 export function MarkdownRenderer({ content, className = '' }: MarkdownRendererProps) {
     return (
-        <div className={`prose prose-sm prose-slate dark:prose-invert max-w-none text-[0.85rem] sm:text-[14px] md:text-[14.5px] lg:text-[15px] ${className}`}>
+        <div className={`prose prose-sm prose-slate dark:prose-invert max-w-none text-[0.9rem] sm:text-[14.5px] md:text-[15px] lg:text-[15.5px] ${className}`}>
             <ReactMarkdown
                 remarkPlugins={[remarkGfm, remarkMath]}
                 rehypePlugins={[rehypeRaw, rehypeKatex, rehypeHighlight]}

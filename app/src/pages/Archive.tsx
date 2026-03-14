@@ -5,6 +5,7 @@ import { AnimatedSection, ScaleOnHover } from '@/components/AnimatedSection';
 import { Link } from 'react-router-dom';
 import { buildArchiveData, buildCategoryStats, sortedPosts } from '@/content/posts-loader';
 import { useEffect, useRef, useState } from 'react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const archiveData = buildArchiveData();
 const categoryStats = buildCategoryStats();
@@ -31,6 +32,7 @@ function getVisibleArchiveData(limit: number) {
 }
 
 export function Archive() {
+  const isMobile = useIsMobile();
   const totalPosts = sortedPosts.length;
   const totalCategories = categoryStats.length;
   const earliestDate = sortedPosts[sortedPosts.length - 1]?.date.slice(0, 7) ?? '--';
@@ -60,7 +62,7 @@ export function Archive() {
   return (
     <div className="min-h-screen pb-6">
       {/* Header */}
-      <section className="py-10 md:py-14">
+      <section className="py-8 md:py-14">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <AnimatedSection className="text-center">
             <motion.div
@@ -78,9 +80,9 @@ export function Archive() {
       </section>
 
       {/* Main Content */}
-      <section className="pt-2 pb-0">
+      <section className="pt-0 sm:pt-2 pb-0">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-3 lg:gap-8">
 
             {/* Timeline */}
             <div className="lg:col-span-2 order-2 lg:order-1">
@@ -102,7 +104,7 @@ export function Archive() {
                       <div className="flex items-center gap-4 mb-5">
                         <span className="text-2xl font-bold text-primary">{yearData.year}</span>
                         <div className="flex-1 h-px bg-border" />
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-[13px] md:text-xs text-muted-foreground">
                           {yearData.months.reduce((acc, m) => acc + m.posts.length, 0)} 篇
                         </span>
                       </div>
@@ -138,7 +140,7 @@ export function Archive() {
                                             <h4 className="font-medium text-sm md:text-base truncate group-hover:text-primary transition-colors duration-200">
                                               {post.title}
                                             </h4>
-                                            <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                                            <div className="flex items-center gap-2 mt-1 text-[13px] md:text-xs text-muted-foreground">
                                               <span>{post.date}</span>
                                               <span>·</span>
                                               <span className="text-primary/70 font-medium">{post.category}</span>
@@ -174,7 +176,7 @@ export function Archive() {
             <div className="lg:col-span-1 space-y-6 order-1 lg:order-2 lg:sticky lg:top-28 self-start">
 
               {/* Stats Card */}
-              <AnimatedSection delay={0.2}>
+              <AnimatedSection delay={0.2} className="hidden sm:block">
                 <ScaleOnHover scale={1.01}>
                   <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
                     <CardContent className="p-5">
@@ -182,14 +184,14 @@ export function Archive() {
                         <BarChart2 className="w-4 h-4 text-primary" />
                         统计概览
                       </h3>
-                      <div className="grid grid-cols-2 gap-5">
+                      <div className="grid grid-cols-2 gap-x-5 gap-y-2">
                         {[
                           { label: '文章总数', value: totalPosts },
+                          { label: '最新发布', value: latestDate },
                           { label: '分类数量', value: totalCategories },
                           { label: '最早发布', value: earliestDate },
-                          { label: '最新发布', value: latestDate },
                         ].map((item) => (
-                          <div key={item.label} className="flex flex-col gap-1.5">
+                          <div key={item.label} className="flex items-center justify-between gap-3 rounded-md py-1">
                             <span className="text-sm text-muted-foreground">{item.label}</span>
                             <span className="text-sm font-semibold">{item.value}</span>
                           </div>
@@ -201,7 +203,7 @@ export function Archive() {
               </AnimatedSection>
 
               {/* Categories */}
-              <AnimatedSection delay={0.3}>
+              <AnimatedSection delay={isMobile ? 0.15 : 0.3}>
                 <Card>
                   <CardContent className="p-4 sm:p-5">
                     <h3 className="font-semibold mb-3 sm:mb-4 flex items-center gap-2">
@@ -214,7 +216,7 @@ export function Archive() {
                           key={cat.name}
                           initial={{ opacity: 0, x: -10 }}
                           animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: 0.3 + index * 0.05, duration: 0.4 }}
+                          transition={{ delay: (isMobile ? 0.15 : 0.3) + index * 0.05, duration: 0.4 }}
                           whileHover={{ x: 4, transition: { type: 'tween', duration: 0.2, ease: 'easeOut' } }}
                           className="flex items-center justify-between p-2 sm:p-2.5 rounded-lg hover:bg-muted transition-colors cursor-default"
                         >

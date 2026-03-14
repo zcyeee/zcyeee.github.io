@@ -1,6 +1,6 @@
 ---
 title: "SSH 入门"
-date: "2026-03-12"
+date: "2025-02-12"
 tags: ["SSH", "VSCode", "新手入门"]
 category: "工程知识"
 excerpt: "从免密登录配置到 VSCode 远程连接、跳板机与各类端口转发隧道，整理 SSH 核心用法与实战场景快查指南。"

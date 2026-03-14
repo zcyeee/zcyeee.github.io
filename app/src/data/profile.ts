@@ -3,7 +3,7 @@ import type { PersonalInfo, Education, Experience, Project, Award, Research } fr
 export const personalInfo: PersonalInfo = {
   name: "张晨阳",
   motto: "浩渺行无极，扬帆但信风",
-  bio: "欢迎来到我的个人博客。我是张晨阳，目前主要关注 Agentic RL 和 Memory 方向，喜欢摄影、旅游和羽毛球。希望在输出中进步，也期待与大家进一步的交流～",
+  bio: "欢迎来到我的个人博客。我是张晨阳，目前主要关注 Agentic RL 和 Memory 方向，喜欢摄影、旅游和羽毛球。希望在输出中进步，期待与大家进一步的交流～",
   email: "chenyoung@whu.edu.cn",
   github: "https://github.com/zcyeee",
   linkedin: "https://linkedin.com/in/zhangmingyuan",

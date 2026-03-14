@@ -1,6 +1,6 @@
 # 个人网站
 
-一个简洁、专业的个人网站，包含个人信息展示、技术博客和摄影作品展示。基于 React 18 + TypeScript + Vite 构建，支持部署到 GitHub Pages。
+一个简洁、专业的个人网站，包含个人信息展示、技术博客和摄影作品展示。基于 React 19 + TypeScript + Vite 构建，支持部署到 GitHub Pages。
 
 ## 在线预览
 
@@ -13,9 +13,9 @@
 | 模块 | 说明 |
 |------|------|
 | 🏠 个人主页 | 自我介绍、教育经历、实习经历、项目展示、荣誉奖项 |
-| 📝 博客文章 | 分类浏览、全文搜索、数学公式（KaTeX）、代码高亮 |
+| 📝 博客文章 | 分类浏览、标题/摘要/标签搜索、数学公式（KaTeX）、代码高亮 |
 | 🗂️ 文章归档 | 按年月时间线浏览、分类统计、无限滚动加载 |
-| 📷 摄影展示 | 瀑布流布局（Masonry）、灯箱查看、分类筛选、懒加载 |
+| 📷 摄影展示 | 响应式分栏瀑布流、分类筛选、悬浮信息卡片 |
 
 ---
 
@@ -55,9 +55,9 @@ personal_web/          # 项目根目录
 │   │   │   └── Gallery.tsx        # 摄影展示页
 │   │   │
 │   │   ├── content/
-│   │   │   └── posts/             # 博客文章目录（Markdown 文件）
-│   │   │       ├── posts-loader.ts # 两层加载器（元数据 eager + 正文 lazy）
-│   │   │       └── *.md           # 博客文章（每篇一个文件）
+│   │   │   ├── posts/             # 博客文章目录（Markdown 文件）
+│   │   │   │   └── *.md           # 博客文章（每篇一个文件）
+│   │   │   └── posts-loader.ts    # 两层加载器（元数据 eager + 正文 lazy）
 │   │   │
 │   │   ├── data/                  # 静态数据配置（内容与代码分离）
 │   │   │   ├── profile.ts         # 个人信息、教育、实习、项目、奖项
@@ -77,6 +77,7 @@ personal_web/          # 项目根目录
 │   ├── vite.config.ts             # Vite 配置
 │   ├── tailwind.config.js         # Tailwind 配置
 │   └── package.json
+├── .github/workflows/deploy.yml   # GitHub Pages 自动部署工作流
 └── README.md                      # 本文件
 ```
 
@@ -111,6 +112,12 @@ npm run build
 
 构建产物位于 `app/dist/` 目录。
 
+### 代码质量检查
+
+```bash
+npm run lint
+```
+
 ---
 
 ## 如何更新内容
@@ -121,9 +128,11 @@ npm run build
 
 - `personalInfo` — 姓名、简介、联系方式、头像
 - `education` — 教育经历列表
-- `experience` — 实习 / 工作经历列表
+- `experiences` — 实习 / 工作经历列表
 - `projects` — 项目经历列表
 - `awards` — 荣誉奖项列表
+- `skills` — 技能要点列表
+- `research` — 论文与研究成果
 
 ### 修改导航 / 页脚
 
@@ -135,11 +144,13 @@ npm run build
 
 ```typescript
 {
+  id: "唯一 ID",
   src: "图片 URL",
-  alt: "图片描述",
-  category: "风景",      // 与筛选分类对应
+  title: "图片标题",
   location: "拍摄地点",
   date: "2024-01",
+  camera: "相机型号",
+  category: "风光",      // 与筛选分类对应
   width: 1200,
   height: 800
 }
@@ -203,7 +214,7 @@ excerpt: "一句话摘要，显示在文章卡片上。"
 
 ### 正文规范
 
-1. **标题层级**：正文从 `##` 开始，不建议在正文中使用 `#`（一级标题）
+1. **标题层级**：可直接使用 `#` / `##` / `###`；渲染器会自动下调一级标题层级以避免与页面主标题冲突
 2. **数学公式**：行内公式使用 `$...$`，块级公式使用 `$$...$$`（基于 KaTeX）
 3. **代码块**：带语言标识符，如 ` ```python `，支持高亮
 4. **图片**：优先使用外链 CDN（图床），避免将大图放入仓库
@@ -246,11 +257,11 @@ export default defineConfig({
 });
 ```
 
-> ⚠️ 当前配置为 `base: './'`（相对路径），切换到 GitHub Pages 前**必须**改为上面的格式，否则页面刷新后路由会 404。
+> ⚠️ 当前仓库配置为 `base: '/'`，适用于用户主页（`<username>.github.io`）。若改为项目主页（`<username>.github.io/<repo>`），需将 `base` 改为 `'/<repo>/'`。
 
-### 第三步：创建 GitHub Actions 工作流
+### 第三步：检查 GitHub Actions 工作流
 
-在项目根目录创建 `.github/workflows/deploy.yml`：
+本仓库已包含 `.github/workflows/deploy.yml`，如需新建可参考以下内容：
 
 ```yaml
 name: Deploy to GitHub Pages
