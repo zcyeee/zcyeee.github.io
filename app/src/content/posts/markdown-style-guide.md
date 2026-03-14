@@ -1,6 +1,6 @@
 ---
 title: "Markdown 样式全览"
-date: "2026-03-08"
+date: "2025-01-01"
 tags: ["Markdown", "排版"]
 category: "工程知识"
 excerpt: "展示博客系统支持的所有 Markdown 格式与样式，可作为撰写新文章的排版参考。"

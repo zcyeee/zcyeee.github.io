@@ -57,7 +57,7 @@ export function Home() {
       {/* Content */}
       <div className="relative z-10">
         {/* Hero Section */}
-        <section className="relative py-9 md:py-13">
+        <section className="relative pt-7 pb-9 md:py-13">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col md:flex-row items-center gap-6 md:gap-10">
               {/* Avatar */}
@@ -297,7 +297,7 @@ export function Home() {
                           whileInView={{ opacity: 1, x: 0 }}
                           viewport={{ once: true }}
                           transition={{ delay: index * 0.1 }}
-                          className="flex items-start gap-2 text-xs md:text-sm text-muted-foreground"
+                          className="flex items-start gap-2 text-sm md:text-sm text-muted-foreground"
                         >
                           <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
                           {skill}
@@ -337,7 +337,7 @@ export function Home() {
                             <h3 className="text-base md:text-lg font-semibold group-hover:text-primary transition-colors duration-300">
                               {edu.school}
                             </h3>
-                            <span className="text-xs md:text-sm text-muted-foreground whitespace-nowrap mt-0.5">
+                            <span className="text-[13px] md:text-sm text-muted-foreground whitespace-nowrap mt-0.5">
                               {edu.startDate} — {edu.endDate}
                             </span>
                           </div>
@@ -411,7 +411,7 @@ export function Home() {
                             {exp.description.map((item, i) => (
                               <li
                                 key={i}
-                                className="flex items-start gap-2 text-xs md:text-sm text-muted-foreground"
+                                className="flex items-start gap-2 text-sm md:text-sm text-muted-foreground"
                               >
                                 <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0" />
                                 {item}
@@ -518,10 +518,10 @@ export function Home() {
 
                             {/* Date */}
                             {project.date && (
-                              <p className="text-xs text-muted-foreground/70 mb-2">{project.date}</p>
+                              <p className="text-[13px] md:text-xs text-muted-foreground/70 mb-2">{project.date}</p>
                             )}
 
-                            <p className="text-xs md:text-sm text-muted-foreground mb-3">
+                            <p className="text-sm md:text-sm text-muted-foreground mb-3">
                               {project.description}
                             </p>
 
@@ -579,7 +579,7 @@ export function Home() {
                                 paper.title
                               )}
                             </h3>
-                            <span className="text-xs md:text-sm text-muted-foreground whitespace-nowrap flex-shrink-0">
+                            <span className="text-[13px] md:text-sm text-muted-foreground whitespace-nowrap flex-shrink-0">
                               {paper.year}
                             </span>
                           </div>
@@ -635,7 +635,7 @@ export function Home() {
                         <span className="text-sm md:text-[15px] font-medium text-foreground/80 truncate group-hover/item:text-primary transition-colors duration-300">{award.title}</span>
                         <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
                           <span className="text-sm text-muted-foreground hidden sm:inline group-hover/item:text-foreground/70 transition-colors duration-300">{award.organization}</span>
-                          <span className="text-xs md:text-sm text-muted-foreground tabular-nums w-[72px] text-right inline-block whitespace-nowrap group-hover/item:text-foreground/70 transition-colors duration-300">
+                          <span className="text-[13px] md:text-sm text-muted-foreground tabular-nums w-[72px] text-right inline-block whitespace-nowrap group-hover/item:text-foreground/70 transition-colors duration-300">
                             {award.date}
                           </span>
                         </div>
