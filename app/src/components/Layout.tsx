@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, BookOpen, Camera, Archive } from 'lucide-react';
 import { siteConfig } from '@/data/siteConfig';
@@ -17,7 +17,7 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const location = useLocation();
-  const [activeRect, setActiveRect] = useState({ left: 0, width: 0, opacity: 0 });
+  const [activeRect, setActiveRect] = useState<{ left: number; width: number; opacity: number } | null>(null);
   const navRefs = useRef<(HTMLAnchorElement | null)[]>([]);
 
   useEffect(() => {
@@ -31,7 +31,7 @@ export function Layout({ children }: LayoutProps) {
     icon: iconMap[item.icon] || Home
   })), []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const activeIndex = navItems.findIndex(item => item.path === location.pathname);
     const el = navRefs.current[activeIndex];
     if (el) {
@@ -42,6 +42,7 @@ export function Layout({ children }: LayoutProps) {
       });
     }
   }, [location.pathname, navItems]);
+  const hoverTransition = { duration: 0.24, ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number] };
 
   return (
     <div className="min-h-screen relative bg-background">
@@ -63,16 +64,18 @@ export function Layout({ children }: LayoutProps) {
         <div className="mx-4 mt-4">
           <nav className="max-w-4xl mx-auto bg-background/80 backdrop-blur-xl rounded-full border border-border/50 shadow-lg shadow-black/5">
             <div className="relative flex items-center justify-center gap-1 px-2 py-2">
-              <motion.div
-                className="absolute bg-primary/10 rounded-full h-[calc(100%-16px)] top-2 pointer-events-none"
-                initial={false}
-                animate={{
-                  left: activeRect.left,
-                  width: activeRect.width,
-                  opacity: activeRect.opacity,
-                }}
-                transition={{ type: 'spring', stiffness: 250, damping: 25 }}
-              />
+              {activeRect && (
+                <motion.div
+                  className="absolute bg-primary/10 rounded-full h-[calc(100%-16px)] top-2 pointer-events-none"
+                  initial={false}
+                  animate={{
+                    left: activeRect.left,
+                    width: activeRect.width,
+                    opacity: activeRect.opacity,
+                  }}
+                  transition={{ type: 'spring', stiffness: 150, damping: 25, mass: 1.15 }}
+                />
+              )}
               {navItems.map((item, index) => {
                 const isActive = location.pathname === item.path;
                 const Icon = item.icon;
@@ -89,6 +92,7 @@ export function Layout({ children }: LayoutProps) {
                     <motion.div
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
+                      transition={hoverTransition}
                       className={`
                         flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors
                         ${isActive
