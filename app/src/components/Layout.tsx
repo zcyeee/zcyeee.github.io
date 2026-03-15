@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, BookOpen, Camera, Archive } from 'lucide-react';
 import { siteConfig } from '@/data/siteConfig';
@@ -22,8 +22,6 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const location = useLocation();
-  const [activeRect, setActiveRect] = useState<{ left: number; width: number; opacity: number } | null>(null);
-  const navRefs = useRef<(HTMLAnchorElement | null)[]>([]);
   const currentPath = useMemo(() => normalizePath(location.pathname), [location.pathname]);
 
   useEffect(() => {
@@ -38,43 +36,7 @@ export function Layout({ children }: LayoutProps) {
     icon: iconMap[item.icon] || Home
   })), []);
 
-  useLayoutEffect(() => {
-    const activeIndex = navItems.findIndex(item => item.normalizedPath === currentPath);
-    if (activeIndex < 0) {
-      return;
-    }
 
-    let frameId: number | null = null;
-    let retries = 0;
-
-    const updateRect = () => {
-      const el = navRefs.current[activeIndex];
-      if (el && el.offsetWidth > 0) {
-        setActiveRect({
-          left: el.offsetLeft,
-          width: el.offsetWidth,
-          opacity: 1
-        });
-        return;
-      }
-
-      if (retries < 8) {
-        retries += 1;
-        frameId = requestAnimationFrame(updateRect);
-      }
-    };
-
-    updateRect();
-    const handleResize = () => updateRect();
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      if (frameId !== null) {
-        cancelAnimationFrame(frameId);
-      }
-      window.removeEventListener('resize', handleResize);
-    };
-  }, [currentPath, navItems]);
   const hoverTransition = { duration: 0.24, ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number] };
 
   return (
@@ -97,31 +59,24 @@ export function Layout({ children }: LayoutProps) {
         <div className="mx-4 mt-4">
           <nav className="max-w-4xl mx-auto bg-background/80 backdrop-blur-xl rounded-full border border-border/50 shadow-lg shadow-black/5">
             <div className="relative flex items-center justify-center gap-1 px-2 py-2">
-              {activeRect && (
-                <motion.div
-                  className="absolute bg-primary/10 rounded-full h-[calc(100%-16px)] top-2 pointer-events-none"
-                  initial={false}
-                  animate={{
-                    left: activeRect.left,
-                    width: activeRect.width,
-                    opacity: activeRect.opacity,
-                  }}
-                  transition={{ type: 'spring', stiffness: 140, damping: 30, mass: 1.15 }}
-                />
-              )}
-              {navItems.map((item, index) => {
+              {navItems.map((item) => {
                 const isActive = item.normalizedPath === currentPath;
                 const Icon = item.icon;
 
                 return (
                   <Link
                     key={item.path}
-                    ref={(el) => {
-                      if (el) navRefs.current[index] = el;
-                    }}
                     to={item.path}
                     className="relative block"
                   >
+                    {isActive && (
+                      <motion.div
+                        layoutId="nav-indicator"
+                        className="absolute inset-0 bg-primary/10 rounded-full z-0 pointer-events-none"
+                        initial={false}
+                        transition={{ type: 'spring', stiffness: 140, damping: 30, mass: 1.15 }}
+                      />
+                    )}
                     <motion.div
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
