@@ -11,6 +11,11 @@ const iconMap: Record<string, React.ElementType> = {
   Camera,
 };
 
+const normalizePath = (path: string) => {
+  if (path === '/') return path;
+  return path.replace(/\/+$/, '');
+};
+
 interface LayoutProps {
   children: React.ReactNode;
 }
@@ -19,6 +24,7 @@ export function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const [activeRect, setActiveRect] = useState<{ left: number; width: number; opacity: number } | null>(null);
   const navRefs = useRef<(HTMLAnchorElement | null)[]>([]);
+  const currentPath = useMemo(() => normalizePath(location.pathname), [location.pathname]);
 
   useEffect(() => {
     const restorePage = sessionStorage.getItem('blogScrollRestorePage');
@@ -28,20 +34,47 @@ export function Layout({ children }: LayoutProps) {
 
   const navItems = useMemo(() => siteConfig.navItems.map(item => ({
     ...item,
+    normalizedPath: normalizePath(item.path),
     icon: iconMap[item.icon] || Home
   })), []);
 
   useLayoutEffect(() => {
-    const activeIndex = navItems.findIndex(item => item.path === location.pathname);
-    const el = navRefs.current[activeIndex];
-    if (el) {
-      setActiveRect({
-        left: el.offsetLeft,
-        width: el.offsetWidth,
-        opacity: 1
-      });
+    const activeIndex = navItems.findIndex(item => item.normalizedPath === currentPath);
+    if (activeIndex < 0) {
+      return;
     }
-  }, [location.pathname, navItems]);
+
+    let frameId: number | null = null;
+    let retries = 0;
+
+    const updateRect = () => {
+      const el = navRefs.current[activeIndex];
+      if (el && el.offsetWidth > 0) {
+        setActiveRect({
+          left: el.offsetLeft,
+          width: el.offsetWidth,
+          opacity: 1
+        });
+        return;
+      }
+
+      if (retries < 8) {
+        retries += 1;
+        frameId = requestAnimationFrame(updateRect);
+      }
+    };
+
+    updateRect();
+    const handleResize = () => updateRect();
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      if (frameId !== null) {
+        cancelAnimationFrame(frameId);
+      }
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [currentPath, navItems]);
   const hoverTransition = { duration: 0.24, ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number] };
 
   return (
@@ -73,11 +106,11 @@ export function Layout({ children }: LayoutProps) {
                     width: activeRect.width,
                     opacity: activeRect.opacity,
                   }}
-                  transition={{ type: 'spring', stiffness: 150, damping: 25, mass: 1.15 }}
+                  transition={{ type: 'spring', stiffness: 140, damping: 30, mass: 1.15 }}
                 />
               )}
               {navItems.map((item, index) => {
-                const isActive = location.pathname === item.path;
+                const isActive = item.normalizedPath === currentPath;
                 const Icon = item.icon;
 
                 return (
