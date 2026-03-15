@@ -38,6 +38,7 @@ export function Gallery() {
     });
     return cols;
   }, [columnCount, filteredPhotos]);
+  const hoverTransition = { duration: 0.28, ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number] };
 
   return (
     <div className="min-h-screen pb-2">
@@ -48,6 +49,7 @@ export function Gallery() {
             <motion.div
               className="inline-flex items-center justify-center p-3 rounded-2xl bg-primary/10 mb-5"
               whileHover={{ scale: 1.1, rotate: 5 }}
+              transition={hoverTransition}
             >
               <Camera className="w-8 h-8 text-primary" />
             </motion.div>
@@ -69,6 +71,7 @@ export function Gallery() {
                   key={category}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
+                  transition={hoverTransition}
                   onClick={() => setSelectedCategory(category)}
                   className={`
                     px-4 py-2 rounded-full text-sm font-medium transition-colors
@@ -96,7 +99,7 @@ export function Gallery() {
                   <AnimatedSection key={photo.id} delay={(index + colIndex) * 0.05} className="break-inside-avoid" amount={0} margin="50px">
                     <motion.div
                       whileHover={{ y: -4 }}
-                      transition={{ duration: 0.3 }}
+                      transition={hoverTransition}
                     >
                       <div
                         className="group relative overflow-hidden rounded-2xl bg-muted cursor-pointer shadow-md hover:shadow-xl transition-all duration-300"

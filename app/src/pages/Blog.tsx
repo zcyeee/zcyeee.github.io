@@ -113,6 +113,7 @@ export function Blog() {
 
   // Featured post: first post in sorted list
   const featuredPost = sortedPosts[0];
+  const hoverTransition = { duration: 0.28, ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number] };
 
   return (
     <div className="min-h-screen pb-6">
@@ -123,6 +124,7 @@ export function Blog() {
             <motion.div
               className="inline-flex items-center justify-center p-3 rounded-2xl bg-primary/10 mb-5"
               whileHover={{ scale: 1.1, rotate: 5 }}
+              transition={hoverTransition}
             >
               <BookOpen className="w-8 h-8 text-primary" />
             </motion.div>
@@ -178,7 +180,7 @@ export function Blog() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {paginatedPosts.map((post, index) => (
                   <AnimatedSection key={post.slug} delay={index * 0.05} amount={0} margin="50px">
-                    <motion.div whileHover={{ y: -4 }} transition={{ duration: 0.2 }}>
+                    <motion.div whileHover={{ y: -4 }} transition={hoverTransition}>
                       <Link
                         to={`/blog/${post.slug}${currentPage > 1 ? `?page=${currentPage}` : ''}`}
                         onClick={rememberScrollPosition}
@@ -302,6 +304,7 @@ export function Blog() {
                         <motion.button
                           key={tag.name}
                           whileHover={{ x: 4 }}
+                          transition={hoverTransition}
                           onClick={() => handleCategoryClick(tag.name)}
                           className={`w-full text-left p-3 rounded-lg transition-colors ${selectedCategory === tag.name
                             ? 'bg-primary/10 text-primary'
@@ -320,7 +323,7 @@ export function Blog() {
               {/* Featured Post */}
               {featuredPost && (
                 <AnimatedSection delay={0.4}>
-                  <motion.div whileHover={{ y: -4 }} transition={{ duration: 0.2 }}>
+                  <motion.div whileHover={{ y: -4 }} transition={hoverTransition}>
                     <Card className="group bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20 hover:shadow-lg transition-all duration-300">
                       <CardContent className="p-5 flex flex-col gap-3 h-full">
                         <div className="flex items-center justify-between">
@@ -358,6 +361,13 @@ export function Blog() {
           </div>
         </div>
       </section>
+      <nav className="sr-only">
+        {sortedPosts.map((post) => (
+          <Link key={post.slug} to={`/blog/${post.slug}`}>
+            {post.title}
+          </Link>
+        ))}
+      </nav>
     </div>
   );
 }

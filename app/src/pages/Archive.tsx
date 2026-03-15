@@ -58,6 +58,7 @@ export function Archive() {
   }, [hasMore]);
 
   const visibleArchiveData = getVisibleArchiveData(visiblePostCount);
+  const hoverTransition = { duration: 0.28, ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number] };
 
   return (
     <div className="min-h-screen pb-6">
@@ -68,6 +69,7 @@ export function Archive() {
             <motion.div
               className="inline-flex items-center justify-center p-3 rounded-2xl bg-primary/10 mb-5"
               whileHover={{ scale: 1.1, rotate: 5 }}
+              transition={hoverTransition}
             >
               <ArchiveIcon className="w-8 h-8 text-primary" />
             </motion.div>
@@ -90,6 +92,7 @@ export function Archive() {
                 <motion.div
                   className="p-2 rounded-lg bg-primary/10"
                   whileHover={{ scale: 1.1, rotate: 5 }}
+                  transition={hoverTransition}
                 >
                   <Calendar className="w-5 h-5 text-primary" />
                 </motion.div>
@@ -129,7 +132,7 @@ export function Archive() {
                               <AnimatedSection key={post.slug} delay={postIndex * 0.05} amount={0} margin="50px">
                                 <motion.div
                                   whileHover={{ y: -2, x: 2 }}
-                                  transition={{ duration: 0.2 }}
+                                  transition={hoverTransition}
                                   className="group"
                                 >
                                   <Link to={`/blog/${post.slug}`}>
@@ -216,8 +219,8 @@ export function Archive() {
                           key={cat.name}
                           initial={{ opacity: 0, x: -10 }}
                           animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: (isMobile ? 0.15 : 0.3) + index * 0.05, duration: 0.4 }}
-                          whileHover={{ x: 4, transition: { type: 'tween', duration: 0.2, ease: 'easeOut' } }}
+                          transition={{ delay: (isMobile ? 0.15 : 0.3) + index * 0.05, duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+                          whileHover={{ x: 4, transition: hoverTransition }}
                           className="flex items-center justify-between p-2 sm:p-2.5 rounded-lg hover:bg-muted transition-colors cursor-default"
                         >
                           <span className="text-sm font-medium">{cat.name}</span>

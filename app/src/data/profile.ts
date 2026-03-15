@@ -3,7 +3,7 @@ import type { PersonalInfo, Education, Experience, Project, Award, Research } fr
 export const personalInfo: PersonalInfo = {
   name: "张晨阳",
   motto: "浩渺行无极，扬帆但信风",
-  bio: "欢迎来到我的个人博客。我是张晨阳，目前主要关注 Agentic RL 和 Memory 方向，喜欢摄影、旅游和羽毛球。希望在输出中进步，期待与大家进一步的交流～",
+  bio: "欢迎来到我的个人博客。我是张晨阳，目前主要关注 Agentic RL 和 Memory 方向，喜欢摄影、旅游和羽毛球。希望在输出中进步，期待与大家进一步的交流",
   email: "chenyoung@whu.edu.cn",
   github: "https://github.com/zcyeee",
   linkedin: "https://linkedin.com/in/zhangmingyuan",
@@ -95,10 +95,10 @@ export const awards: Award[] = [
 ];
 
 export const skills: string[] = [
-  "熟悉 Python、PyTorch，掌握 Slurm、Linux、Shell、Git 等开发与任务调度环境",
+  // "熟悉 Python、PyTorch，掌握 Slurm、Linux、Shell、Git 等开发与任务调度环境",
   "熟悉 PPO、GRPO、DAPO 等强化学习算法与 Verl 强化学习框架",
   "熟悉 RAG、Agent 等 LLM 应用技术，了解 LangChain 以及 LLM 基础原理及应用",
-  "熟悉 SQL 和 LaTeX，掌握 Python 数据分析与可视化（如 Matplotlib、Seaborn），了解 Tableau 等工具",
+  "熟悉 SQL 和 LaTeX，掌握 Python 数据分析与可视化，了解 Tableau 等工具",
 ];
 
 export const research: Research[] = [

@@ -24,6 +24,7 @@ export function Home() {
       transition: { duration: 0.5, ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number] },
     },
   };
+  const hoverTransition = { duration: 0.28, ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number] };
   const renderAuthors = (authors: string) => {
     const highlightName = 'Chenyang Zhang';
     const scholarUrl = 'https://scholar.google.com/citations?user=CtwaMOQAAAAJ&hl=zh-CN';
@@ -149,7 +150,7 @@ export function Home() {
                   className="flex flex-wrap items-center justify-center md:justify-start gap-2"
                 >
                   {/* WeChat - desktop only, first in row */}
-                  <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }} className="hidden md:inline-flex">
+                  <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }} transition={hoverTransition} className="hidden md:inline-flex">
                     <button
                       onClick={() => setWechatOpen(true)}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-green-500/10 border border-green-500/30 text-green-600 hover:bg-green-500/20 hover:border-green-500/50 transition-all duration-200 text-xs font-medium cursor-pointer"
@@ -165,6 +166,7 @@ export function Home() {
                       rel="noopener noreferrer"
                       whileHover={{ scale: 1.05, y: -2 }}
                       whileTap={{ scale: 0.95 }}
+                      transition={hoverTransition}
                     >
                       <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs">
                         <Github className="w-3.5 h-3.5" />
@@ -179,6 +181,7 @@ export function Home() {
                       rel="noopener noreferrer"
                       whileHover={{ scale: 1.05, y: -2 }}
                       whileTap={{ scale: 0.95 }}
+                      transition={hoverTransition}
                     >
                       <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs">
                         <Linkedin className="w-3.5 h-3.5" />
@@ -193,6 +196,7 @@ export function Home() {
                       rel="noopener noreferrer"
                       whileHover={{ scale: 1.05, y: -2 }}
                       whileTap={{ scale: 0.95 }}
+                      transition={hoverTransition}
                     >
                       <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs">
                         <FileText className="w-3.5 h-3.5" />
@@ -211,7 +215,7 @@ export function Home() {
                   transition={{ duration: 0.6, delay: 0.7 }}
                   className="mt-3 md:hidden"
                 >
-                  <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }} className="inline-flex">
+                  <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }} transition={hoverTransition} className="inline-flex">
                     <button
                       onClick={() => setWechatOpen(true)}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-green-500/10 border border-green-500/30 text-green-600 hover:bg-green-500/20 hover:border-green-500/50 transition-all duration-200 text-xs font-medium cursor-pointer"
@@ -278,6 +282,7 @@ export function Home() {
               <motion.div
                 className="p-2 rounded-lg bg-primary/10"
                 whileHover={{ scale: 1.1, rotate: 5 }}
+                transition={hoverTransition}
               >
                 <Cpu className="w-5 h-5 text-primary" />
               </motion.div>
@@ -296,7 +301,11 @@ export function Home() {
                           initial={{ opacity: 0, x: -10 }}
                           whileInView={{ opacity: 1, x: 0 }}
                           viewport={{ once: true }}
-                          transition={{ delay: index * 0.1 }}
+                          transition={{
+                            delay: index * 0.08,
+                            duration: 0.6,
+                            ease: [0.25, 0.1, 0.25, 1],
+                          }}
                           className="flex items-start gap-2 text-sm md:text-sm text-muted-foreground"
                         >
                           <span className="w-1.5 h-1.5 rounded-full bg-primary mt-2 flex-shrink-0" />
@@ -318,6 +327,7 @@ export function Home() {
               <motion.div
                 className="p-2 rounded-lg bg-primary/10"
                 whileHover={{ scale: 1.1, rotate: 5 }}
+                transition={hoverTransition}
               >
                 <GraduationCap className="w-5 h-5 text-primary" />
               </motion.div>
@@ -369,6 +379,7 @@ export function Home() {
               <motion.div
                 className="p-2 rounded-lg bg-primary/10"
                 whileHover={{ scale: 1.1, rotate: 5 }}
+                transition={hoverTransition}
               >
                 <Briefcase className="w-5 h-5 text-primary" />
               </motion.div>
@@ -435,6 +446,7 @@ export function Home() {
               <motion.div
                 className="p-2 rounded-lg bg-primary/10"
                 whileHover={{ scale: 1.1, rotate: 5 }}
+                transition={hoverTransition}
               >
                 <Code className="w-5 h-5 text-primary" />
               </motion.div>
@@ -456,7 +468,7 @@ export function Home() {
                               alt={project.name}
                               className="w-full h-full object-cover md:scale-110"
                               whileHover={{ scale: 1.05 }}
-                              transition={{ duration: 0.3 }}
+                              transition={hoverTransition}
                             />
                           </div>
 
@@ -492,6 +504,7 @@ export function Home() {
                                     rel="noopener noreferrer"
                                     whileHover={{ scale: 1.1 }}
                                     whileTap={{ scale: 0.9 }}
+                                    transition={hoverTransition}
                                   >
                                     <Button variant="ghost" size="sm" className="gap-1 h-8 text-xs px-2.5">
                                       <Github className="w-3.5 h-3.5" />
@@ -506,6 +519,7 @@ export function Home() {
                                     rel="noopener noreferrer"
                                     whileHover={{ scale: 1.1 }}
                                     whileTap={{ scale: 0.9 }}
+                                    transition={hoverTransition}
                                   >
                                     <Button variant="ghost" size="sm" className="gap-1 h-8 text-xs px-2.5">
                                       <ExternalLink className="w-3.5 h-3.5" />
@@ -550,6 +564,7 @@ export function Home() {
               <motion.div
                 className="p-2 rounded-lg bg-primary/10"
                 whileHover={{ scale: 1.1, rotate: 5 }}
+                transition={hoverTransition}
               >
                 <FileText className="w-5 h-5 text-primary" />
               </motion.div>
@@ -609,6 +624,7 @@ export function Home() {
               <motion.div
                 className="p-2 rounded-lg bg-primary/10"
                 whileHover={{ scale: 1.1, rotate: 5 }}
+                transition={hoverTransition}
               >
                 <Award className="w-5 h-5 text-primary" />
               </motion.div>
@@ -630,6 +646,7 @@ export function Home() {
                         key={index}
                         variants={awardItemVariants}
                         whileHover={{ x: 6 }}
+                        transition={hoverTransition}
                         className="flex items-center justify-between gap-3 py-2.5 first:pt-1 last:pb-1 group/item cursor-default"
                       >
                         <span className="text-sm md:text-[15px] font-medium text-foreground/80 truncate group-hover/item:text-primary transition-colors duration-300">{award.title}</span>

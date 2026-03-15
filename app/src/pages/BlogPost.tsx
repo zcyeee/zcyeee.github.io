@@ -46,6 +46,7 @@ export function BlogPost() {
     const relatedPosts = post
         ? sortedPosts.filter((p) => p.slug !== slug && p.category === post.category).slice(0, 3)
         : [];
+    const hoverTransition = { duration: 0.28, ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number] };
 
     // 404
     if (!post) {
@@ -162,7 +163,7 @@ export function BlogPost() {
                                 <h2 className="text-lg sm:text-xl font-semibold mb-4">相关文章</h2>
                                 <div className="space-y-3">
                                     {relatedPosts.map((related) => (
-                                        <motion.div key={related.slug} whileHover={{ y: -4 }} transition={{ duration: 0.2 }}>
+                                        <motion.div key={related.slug} whileHover={{ y: -4 }} transition={hoverTransition}>
                                             <Link to={`/blog/${related.slug}${relatedSuffix}`}>
                                                 <Card className="hover:border-primary/30 transition-colors cursor-pointer">
                                                     <CardContent className="p-4 flex items-center justify-between">
