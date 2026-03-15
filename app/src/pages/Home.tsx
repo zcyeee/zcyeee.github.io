@@ -518,7 +518,7 @@ export function Home() {
 
                             {/* Date */}
                             {project.date && (
-                              <p className="text-[13px] md:text-xs text-muted-foreground/70 mb-2">{project.date}</p>
+                              <p className="text-[13px] md:text-[13px] text-muted-foreground/70 mb-2">{project.date}</p>
                             )}
 
                             <p className="text-sm md:text-sm text-muted-foreground mb-3">

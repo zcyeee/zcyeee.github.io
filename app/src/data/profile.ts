@@ -68,7 +68,7 @@ export const projects: Project[] = [
   {
     name: "EastMoney Crawler · 东方财富股吧爬虫",
     date: "开源项目   2024",
-    stars: 171,
+    stars: 175,
     description: "开源的东方财富股吧数据采集工具，支持多线程并发爬取帖子与评论信息并持久化至 MongoDB。采用 Selenium + stealth.js 规避反爬检测；以 MVC 模式解耦爬虫（PostCrawler / CommentCrawler）、解析器与数据库接口（MongoAPI），支持 post_id 关联查询，适用于量化研究与舆情分析。",
     technologies: ["Selenium", "MongoDB", "多线程", "MVC架构"],
     github: "https://github.com/zcyeee/EastMoney_Crawler",

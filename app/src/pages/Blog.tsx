@@ -210,7 +210,7 @@ export function Blog() {
                               {/* Tags & Read Time */}
                               <div className="flex items-center justify-between pt-2">
                                 <div className="flex flex-wrap gap-1">
-                                  {post.tags.slice(0, 2).map((tag) => (
+                                  {post.tags.slice(0, 3).map((tag) => (
                                     <span
                                       key={tag}
                                       className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded"
