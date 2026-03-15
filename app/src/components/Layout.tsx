@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, BookOpen, Camera, Archive } from 'lucide-react';
 import { siteConfig } from '@/data/siteConfig';
@@ -23,6 +23,17 @@ interface LayoutProps {
 export function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const currentPath = useMemo(() => normalizePath(location.pathname), [location.pathname]);
+  const navContainerRef = useRef<HTMLDivElement | null>(null);
+  const navLinkRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
+  const lastIndicatorCenterRef = useRef<number | null>(null);
+  const [indicatorStyle, setIndicatorStyle] = useState<{ x: number; y: number; width: number; height: number; isVisible: boolean }>({
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+    isVisible: false,
+  });
+  const [indicatorDuration, setIndicatorDuration] = useState(1.0);
 
   useEffect(() => {
     const restorePage = sessionStorage.getItem('blogScrollRestorePage');
@@ -38,6 +49,61 @@ export function Layout({ children }: LayoutProps) {
 
 
   const hoverTransition = { duration: 0.24, ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number] };
+  const indicatorTransition = { duration: indicatorDuration, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] };
+  const indicatorInset = 0;
+  const indicatorMinDuration = 1.0;
+  const indicatorMaxDuration = 1.6;
+  const indicatorPixelsPerSecond = 330;
+
+  const updateIndicator = useCallback(() => {
+    const navContainer = navContainerRef.current;
+    const activeLink = navLinkRefs.current[currentPath];
+    if (!navContainer || !activeLink) return;
+
+    const containerRect = navContainer.getBoundingClientRect();
+    const activeRect = activeLink.getBoundingClientRect();
+    const nextX = activeRect.left - containerRect.left + indicatorInset;
+    const nextY = activeRect.top - containerRect.top + indicatorInset;
+    const nextWidth = Math.max(activeRect.width - indicatorInset * 2, 0);
+    const nextHeight = Math.max(activeRect.height - indicatorInset * 2, 0);
+    const nextCenter = nextX + nextWidth / 2;
+    const prevCenter = lastIndicatorCenterRef.current;
+
+    if (prevCenter !== null) {
+      const distance = Math.abs(nextCenter - prevCenter);
+      const adaptiveDuration = Math.min(
+        indicatorMaxDuration,
+        Math.max(indicatorMinDuration, distance / indicatorPixelsPerSecond)
+      );
+      setIndicatorDuration(adaptiveDuration);
+    } else {
+      setIndicatorDuration(0.32);
+    }
+
+    lastIndicatorCenterRef.current = nextCenter;
+
+    setIndicatorStyle({
+      x: nextX,
+      y: nextY,
+      width: nextWidth,
+      height: nextHeight,
+      isVisible: true,
+    });
+  }, [currentPath, indicatorInset, indicatorMaxDuration, indicatorMinDuration, indicatorPixelsPerSecond]);
+
+  useLayoutEffect(() => {
+    updateIndicator();
+  }, [updateIndicator]);
+
+  useEffect(() => {
+    const rafId = requestAnimationFrame(updateIndicator);
+    return () => cancelAnimationFrame(rafId);
+  }, [updateIndicator]);
+
+  useEffect(() => {
+    window.addEventListener('resize', updateIndicator);
+    return () => window.removeEventListener('resize', updateIndicator);
+  }, [updateIndicator]);
 
   return (
     <div className="min-h-screen relative bg-background">
@@ -53,12 +119,21 @@ export function Layout({ children }: LayoutProps) {
       <motion.header
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
+        layoutRoot
         transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
         className="fixed top-0 left-0 right-0 z-50"
       >
         <div className="mx-4 mt-4">
           <nav className="max-w-4xl mx-auto bg-background/80 backdrop-blur-xl rounded-full border border-border/50 shadow-lg shadow-black/5">
-            <div className="relative flex items-center justify-center gap-1 px-2 py-2">
+            <div ref={navContainerRef} className="relative flex items-center justify-center gap-1 px-2 py-2">
+              {indicatorStyle.isVisible && (
+                <motion.div
+                  className="absolute left-0 top-0 rounded-full z-0 pointer-events-none bg-[hsl(var(--primary)/0.1)] dark:bg-[hsl(var(--primary)/0.14)]"
+                  animate={{ x: indicatorStyle.x, y: indicatorStyle.y, width: indicatorStyle.width, height: indicatorStyle.height }}
+                  initial={false}
+                  transition={indicatorTransition}
+                />
+              )}
               {navItems.map((item) => {
                 const isActive = item.normalizedPath === currentPath;
                 const Icon = item.icon;
@@ -67,16 +142,11 @@ export function Layout({ children }: LayoutProps) {
                   <Link
                     key={item.path}
                     to={item.path}
+                    ref={(node) => {
+                      navLinkRefs.current[item.normalizedPath] = node;
+                    }}
                     className="relative block"
                   >
-                    {isActive && (
-                      <motion.div
-                        layoutId="nav-indicator"
-                        className="absolute inset-0 bg-primary/10 rounded-full z-0 pointer-events-none"
-                        initial={false}
-                        transition={{ type: 'spring', stiffness: 140, damping: 30, mass: 1.15 }}
-                      />
-                    )}
                     <motion.div
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
