@@ -3,6 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      (() => {
+        const redirect = sessionStorage.getItem('spa_redirect');
+        if (!redirect) return;
+        sessionStorage.removeItem('spa_redirect');
+        const url = new URL(redirect, window.location.origin);
+        window.history.replaceState(null, '', url.pathname + url.search + url.hash);
+      })();
+    </script>
     <title>Portfolio</title>
   </head>
   <body>

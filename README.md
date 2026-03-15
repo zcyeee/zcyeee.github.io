@@ -28,10 +28,11 @@
 | Vite | 7 | 构建工具 |
 | Tailwind CSS | 3 | 样式框架 |
 | shadcn/ui | — | UI 组件库（Radix UI 封装） |
-| React Router | 7 | 客户端路由（Hash 模式） |
+| React Router | 7 | 客户端路由（BrowserRouter） |
 | Framer Motion | 12 | 动画效果 |
 | KaTeX | 0.16 | 数学公式渲染 |
 | react-markdown | 10 | Markdown 渲染 |
+| react-snap | 1.23 | 构建后预渲染（SSG） |
 
 ---
 
@@ -110,7 +111,16 @@ npm run dev
 npm run build
 ```
 
-构建产物位于 `app/dist/` 目录。
+当前构建流程会执行：
+
+1. `tsc -b && vite build`
+2. `react-snap` 预渲染（由 `postbuild` 自动触发）
+
+最终产物位于 `app/dist/`，并包含：
+
+- 常规静态资源：`assets/*`
+- 预渲染页面：`/`、`/blog`、`/blog/<slug>`、`/archive`、`/gallery`
+- 兼容回退页：`404.html`、`200.html`
 
 ### 代码质量检查
 
@@ -220,12 +230,15 @@ excerpt: "一句话摘要，显示在文章卡片上。"
 4. **图片**：优先使用外链 CDN（图床），避免将大图放入仓库
 5. **参考资料**：建议在文末以列表形式列出
 
-### 加载机制
+### 渲染与加载机制
 
-博客采用**两层加载策略**，无需额外操作：
+当前博客采用「**SSG 预渲染 + 客户端 Hydration + Markdown 分层加载**」：
 
-- **构建时**：所有 `.md` 文件的 Frontmatter 被 eagerly 解析并打包进主 bundle（元数据约 1-2 KB / 篇）
-- **运行时**：文章正文按需懒加载（用户点开时才下载对应 chunk），浏览器自动缓存
+- **构建阶段（SSG）**：`react-snap` 会抓取站内路由并输出对应静态 HTML，提升首屏可见性与收录友好度
+- **接管阶段（Hydration）**：浏览器加载 JS 后对预渲染 HTML 进行接管，保留现有交互与动画效果
+- **内容阶段（Markdown）**：
+  - Frontmatter 在构建时被 eager 扫描用于列表与归档
+  - 正文按需加载，在首次打开文章时下载对应内容并缓存
 
 ### 发布新文章步骤
 
@@ -360,7 +373,13 @@ git push -u origin main
 
 **Q：页面刷新后出现 404？**
 
-A：GitHub Pages 不支持 SPA 的 pushState 路由。本项目默认使用 Hash 路由（URL 含 `#`），刷新不会 404。若你切换为 history 路由，需在 `public/` 下添加 `404.html` 并把内容复制为 `index.html`。
+A：项目当前已使用 BrowserRouter（无 `#` 链接）并在 GitHub Pages 上做了回退处理：
+
+- `public/404.html` 负责记录原始路径并回跳入口
+- `index.html` 会读取并恢复目标路径
+- 构建后还会生成 `200.html` 作为预渲染回退文件
+
+如果你改动了路由或部署根路径（`base`），请同步检查这两处逻辑。
 
 **Q：如何修改导航菜单？**
 
