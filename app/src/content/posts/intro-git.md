@@ -292,42 +292,7 @@ git pull
 
 # 四、高频操作
 
-## 1. 查看提交历史：git log
-
-查看简洁记录、含差异比对的详细历史：
-```bash
-git log --oneline   # 查看简洁历史，每个提交显示为一行
-git log -p          # 查看详细历史（包含每次修改的具体 diff 内容）
-git log -p main.py  # 查看指定单个文件的修改历史
-```
-
-## 2. 撤销修改：git checkout / reset
-
-撤销工作区修改（未 `git add` 的文件）：
-```bash
-# 恢复 main.py 到最近一次提交的状态（丢弃修改）
-git checkout -- main.py
-```
-
-撤销暂存区修改（已 `git add` 但未 `commit`）：
-```bash
-# 将 main.py 从暂存区移回工作区（保留文件本身的修改）
-git reset HEAD main.py
-```
-
-撤销最近一次提交（回到暂存区，保留修改内容）：
-```bash
-# HEAD~1 表示上一个版本
-git reset --soft HEAD~1
-```
-
-彻底撤销最近一次提交：
-```bash
-# 丢弃修改内容，完全回滚！谨慎使用
-git reset --hard HEAD~1
-```
-
-## 3. 合并分支：git merge
+## 1. 合并分支：git merge
 
 将 `feature/login` 的工作成果合并回主干：
 ```bash
@@ -338,7 +303,7 @@ git checkout main
 git merge feature/login
 ```
 
-## 4. 放弃本地所有修改，强制同步远程代码
+## 2. 强制同步远程代码
 
 当本地代码异常混乱且无需保留时，可强制将本地重置为与远程完全一致：
 ```bash
@@ -351,7 +316,7 @@ git reset --hard origin/main
 > [!WARNING]
 > 这个操作会不可逆转地丢失本地所有的未提交更改和尚未推送到远程的提交记录，使用前务必确认。
 
-## 5、代码暂存：git stash
+## 3. 代码暂存：git stash
 
 如果在某分支进行开发时，临时需要切换到其他分支处理紧急事务，但又不想生成多余的 `commit`，可以利用 `git stash` 将修改暂存并带过去：
 
@@ -370,6 +335,84 @@ git checkout main
 git checkout 原分支
 git stash pop
 ```
+
+## 4. 修改最近一次提交：git commit --amend
+
+适用于“刚提交就发现问题”的场景，比如补漏文件或改错提交说明。
+
+```bash
+# 先补充遗漏文件
+git add .
+
+# 修改最近一次提交（会重写最近一次 commit）
+git commit --amend
+
+# 也可直接改提交信息，不改内容
+git commit --amend -m "feat: 更新更准确的提交说明"
+```
+
+## 5. 撤销修改：git reset
+
+撤销暂存区修改（已 `git add` 但未 `commit`）：
+```bash
+# 将 main.py 从暂存区移回工作区（保留文件本身的修改）
+git reset HEAD main.py
+```
+
+回退最近一次提交，代码保留在暂存区：
+```bash
+# HEAD~1 表示上一个版本
+git reset --soft HEAD~1
+```
+
+回退最近一次提交，代码与提交都删除（危险）：
+```bash
+# 丢弃修改内容，完全回滚。谨慎使用
+git reset --hard HEAD~1
+```
+
+## 6. 返回某次历史提交：git revert
+
+如果提交已经推到远程，通常推荐 `revert` 而不是 `reset`，因为它不会改写历史，而是新增一个“反向提交”。
+
+```bash
+# 撤销指定提交（不会删除历史）
+git revert <commit_hash>
+```
+
+## 7. 批量整理历史提交：git rebase -i
+
+交互式变基可用于压缩、改名、删除历史提交（常用于合并前清理提交历史）：
+
+```bash
+# 整理最近 3 次提交
+git rebase -i HEAD~3
+```
+
+在打开的编辑列表中可使用：
+- `pick`：保留提交
+- `reword`：仅修改提交信息
+- `squash`：合并到上一条提交
+- `drop`：删除该提交
+
+
+## 8. 强制推送远程分支：git push --force
+
+当你执行了 `commit --amend`、`reset`、`rebase` 等改写历史操作后，本地与远程提交链会不一致，此时推送可能失败，需要强制更新远程分支。
+
+```bash
+# 强制覆盖远程 main 分支
+git push origin main --force
+```
+
+更安全的方式（防止覆盖他人新提交）：
+
+```bash
+git push origin main --force-with-lease
+```
+
+> [!WARNING]
+> 强制推送会重写远程历史，可能影响协作成员。建议在个人分支使用，或与团队同步后再执行。
 
 ---
 
@@ -399,5 +442,4 @@ git config --global http.version HTTP/1.1
 # 若想恢复默认设置
 git config --global --unset http.version
 ```
-
 
