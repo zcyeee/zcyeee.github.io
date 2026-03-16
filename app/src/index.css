@@ -101,3 +101,20 @@ pre code.hljs {
   background: transparent !important;
   padding: 0 !important;
 }
+
+/* Nav header slide-in — uses CSS animation so getBoundingClientRect()
+   returns the final layout position during useLayoutEffect. */
+@keyframes navSlideDown {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.nav-slide-down {
+  animation: navSlideDown 0.6s cubic-bezier(0.25, 0.1, 0.25, 1) both;
+}
