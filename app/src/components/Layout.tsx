@@ -116,13 +116,7 @@ export function Layout({ children }: LayoutProps) {
       </div>
 
       {/* Navigation Bar */}
-      <motion.header
-        initial={{ y: -100, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        layoutRoot
-        transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
-        className="fixed top-0 left-0 right-0 z-50"
-      >
+      <header className="fixed top-0 left-0 right-0 z-50 nav-slide-down">
         <div className="mx-4 mt-4">
           <nav className="max-w-4xl mx-auto bg-background/80 backdrop-blur-xl rounded-full border border-border/50 shadow-lg shadow-black/5">
             <div ref={navContainerRef} className="relative flex items-center justify-center gap-1 px-2 py-2">
@@ -168,7 +162,7 @@ export function Layout({ children }: LayoutProps) {
             </div>
           </nav>
         </div>
-      </motion.header>
+      </header>
 
       {/* Main Content */}
       <main className="relative z-10 pt-24">
