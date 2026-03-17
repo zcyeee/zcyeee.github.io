@@ -185,7 +185,7 @@ git checkout feature/login
 git checkout -b feature/payment  
 ```
 
-重命名当前分支（例如将默认的 `master` 改为 `main`）：
+重命名当前分支。例如改为当前默认名称 `main`（旧版本默认为 `master`）：
 ```bash
 # -m 是 move 的缩写，用于重命名
 git branch -m main
@@ -264,10 +264,11 @@ git remote set-url origin [新仓库地址]
 
 推送本地 `main` 分支到远程 `origin` 仓库，并建立上游追踪：
 ```bash
+# 新版本本地默认分支名为 main
 git push -u origin main
 
-# 若本地默认分支名不是 main（如 master），替换为对应名称：
-# git push -u origin master
+# 旧版本默认分支名 master，替换为对应名称：
+git push -u origin master
 ```
 > **说明**：`-u` 是 `--set-upstream` 的缩写。建立追踪后，后续的推送可以简化为 `git push`。
 
