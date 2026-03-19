@@ -23,9 +23,11 @@ interface LayoutProps {
 export function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const currentPath = useMemo(() => normalizePath(location.pathname), [location.pathname]);
+  const isPrerendering = typeof navigator !== 'undefined' && navigator.userAgent === 'ReactSnap';
   const navContainerRef = useRef<HTMLDivElement | null>(null);
   const navLinkRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
   const lastIndicatorCenterRef = useRef<number | null>(null);
+  const lastPositionedPathRef = useRef<string | null>(null);
   const [indicatorStyle, setIndicatorStyle] = useState<{ x: number; y: number; width: number; height: number; isVisible: boolean }>({
     x: 0,
     y: 0,
@@ -33,7 +35,8 @@ export function Layout({ children }: LayoutProps) {
     height: 0,
     isVisible: false,
   });
-  const [indicatorDuration, setIndicatorDuration] = useState(1.0);
+  const [indicatorDuration, setIndicatorDuration] = useState(0);
+  const [isIndicatorReady, setIsIndicatorReady] = useState(false);
 
   useEffect(() => {
     const restorePage = sessionStorage.getItem('blogScrollRestorePage');
@@ -68,8 +71,11 @@ export function Layout({ children }: LayoutProps) {
     const nextHeight = Math.max(activeRect.height - indicatorInset * 2, 0);
     const nextCenter = nextX + nextWidth / 2;
     const prevCenter = lastIndicatorCenterRef.current;
+    const isNavigation =
+      lastPositionedPathRef.current !== null &&
+      lastPositionedPathRef.current !== currentPath;
 
-    if (prevCenter !== null) {
+    if (isNavigation && prevCenter !== null) {
       const distance = Math.abs(nextCenter - prevCenter);
       const adaptiveDuration = Math.min(
         indicatorMaxDuration,
@@ -77,10 +83,12 @@ export function Layout({ children }: LayoutProps) {
       );
       setIndicatorDuration(adaptiveDuration);
     } else {
-      setIndicatorDuration(0.32);
+      // 非路由切换（首屏二次测量、resize、字体回流等）时直接对齐，避免出现“先错位再平移”。
+      setIndicatorDuration(0);
     }
 
     lastIndicatorCenterRef.current = nextCenter;
+    lastPositionedPathRef.current = currentPath;
 
     setIndicatorStyle({
       x: nextX,
@@ -91,19 +99,71 @@ export function Layout({ children }: LayoutProps) {
     });
   }, [currentPath, indicatorInset, indicatorMaxDuration, indicatorMinDuration, indicatorPixelsPerSecond]);
 
+  useEffect(() => {
+    if (isPrerendering || isIndicatorReady) return;
+
+    let rafId = 0;
+    let frameCount = 0;
+    let stableFrameCount = 0;
+    let prevX: number | null = null;
+    let prevWidth: number | null = null;
+    let cancelled = false;
+
+    const waitForStablePosition = () => {
+      if (cancelled) return;
+
+      const navContainer = navContainerRef.current;
+      const activeLink = navLinkRefs.current[currentPath];
+      if (!navContainer || !activeLink) {
+        rafId = requestAnimationFrame(waitForStablePosition);
+        return;
+      }
+
+      const containerRect = navContainer.getBoundingClientRect();
+      const activeRect = activeLink.getBoundingClientRect();
+      const nextX = activeRect.left - containerRect.left + indicatorInset;
+      const nextWidth = Math.max(activeRect.width - indicatorInset * 2, 0);
+
+      const isStable =
+        prevX !== null &&
+        prevWidth !== null &&
+        Math.abs(nextX - prevX) < 0.5 &&
+        Math.abs(nextWidth - prevWidth) < 0.5;
+
+      stableFrameCount = isStable ? stableFrameCount + 1 : 0;
+      prevX = nextX;
+      prevWidth = nextWidth;
+      frameCount += 1;
+
+      updateIndicator();
+
+      // 仅在真实浏览器中、导航布局稳定后再显示指示器，避免首屏预渲染闪烁。
+      if (stableFrameCount >= 1 || frameCount >= 45) {
+        setIndicatorDuration(0);
+        setIsIndicatorReady(true);
+        return;
+      }
+
+      rafId = requestAnimationFrame(waitForStablePosition);
+    };
+
+    rafId = requestAnimationFrame(waitForStablePosition);
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(rafId);
+    };
+  }, [currentPath, indicatorInset, isIndicatorReady, isPrerendering, updateIndicator]);
+
   useLayoutEffect(() => {
+    if (isPrerendering || !isIndicatorReady) return;
     updateIndicator();
-  }, [updateIndicator]);
+  }, [isIndicatorReady, isPrerendering, updateIndicator]);
 
   useEffect(() => {
-    const rafId = requestAnimationFrame(updateIndicator);
-    return () => cancelAnimationFrame(rafId);
-  }, [updateIndicator]);
-
-  useEffect(() => {
+    if (isPrerendering || !isIndicatorReady) return;
     window.addEventListener('resize', updateIndicator);
     return () => window.removeEventListener('resize', updateIndicator);
-  }, [updateIndicator]);
+  }, [isIndicatorReady, isPrerendering, updateIndicator]);
 
   return (
     <div className="min-h-screen relative bg-background">
@@ -120,7 +180,7 @@ export function Layout({ children }: LayoutProps) {
         <div className="mx-4 mt-4">
           <nav className="max-w-4xl mx-auto bg-background/80 backdrop-blur-xl rounded-full border border-border/50 shadow-lg shadow-black/5">
             <div ref={navContainerRef} className="relative flex items-center justify-center gap-1 px-2 py-2">
-              {indicatorStyle.isVisible && (
+              {!isPrerendering && isIndicatorReady && indicatorStyle.isVisible && (
                 <motion.div
                   className="absolute left-0 top-0 rounded-full z-0 pointer-events-none bg-[hsl(var(--primary)/0.1)] dark:bg-[hsl(var(--primary)/0.14)]"
                   animate={{ x: indicatorStyle.x, y: indicatorStyle.y, width: indicatorStyle.width, height: indicatorStyle.height }}
