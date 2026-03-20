@@ -3,6 +3,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { Link, useLocation } from 'react-router-dom';
 import { Home, BookOpen, Camera, Archive } from 'lucide-react';
 import { siteConfig } from '@/data/siteConfig';
+import { isReactSnapPrerender } from '@/lib/prerender';
 
 const iconMap: Record<string, React.ElementType> = {
   Home,
@@ -23,9 +24,16 @@ interface LayoutProps {
 export function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const currentPath = useMemo(() => normalizePath(location.pathname), [location.pathname]);
-  const isPrerendering = typeof navigator !== 'undefined' && navigator.userAgent === 'ReactSnap';
+  /** react-snap 拍快照时：UA 为 ReactSnap，只输出静态壳 */
+  const isSnap = isReactSnapPrerender();
+  /** 真实浏览器 hydration 首帧须与快照 DOM 一致（内层为 div），再启用 framer-motion */
+  const [enableNavMotion, setEnableNavMotion] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
   const navContainerRef = useRef<HTMLDivElement | null>(null);
   const navLinkRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
+  const navMotionFallbackTimerRef = useRef<number | null>(null);
+  const hasEnabledNavMotionRef = useRef(false);
+  const hasTriggeredNavEnterRef = useRef(false);
   const lastIndicatorCenterRef = useRef<number | null>(null);
   const lastPositionedPathRef = useRef<string | null>(null);
   const [indicatorStyle, setIndicatorStyle] = useState<{ x: number; y: number; width: number; height: number; isVisible: boolean }>({
@@ -43,6 +51,41 @@ export function Layout({ children }: LayoutProps) {
     if (location.pathname === '/blog' && restorePage) return;
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, [location.pathname]);
+
+  const enableNavMotionOnce = useCallback(() => {
+    if (hasEnabledNavMotionRef.current) return;
+    hasEnabledNavMotionRef.current = true;
+    if (navMotionFallbackTimerRef.current !== null) {
+      window.clearTimeout(navMotionFallbackTimerRef.current);
+      navMotionFallbackTimerRef.current = null;
+    }
+    setEnableNavMotion(true);
+  }, []);
+
+  const setNavContainerNode = useCallback((node: HTMLDivElement | null) => {
+    navContainerRef.current = node;
+    if (!node) {
+      if (navMotionFallbackTimerRef.current !== null) {
+        window.clearTimeout(navMotionFallbackTimerRef.current);
+        navMotionFallbackTimerRef.current = null;
+      }
+      return;
+    }
+    if (isSnap || hasTriggeredNavEnterRef.current) return;
+
+    hasTriggeredNavEnterRef.current = true;
+    setIsHydrated(true);
+
+    // 移动端偶发 animationend 丢失时，仍在入场结束后开启交互动画。
+    navMotionFallbackTimerRef.current = window.setTimeout(() => {
+      enableNavMotionOnce();
+    }, 700);
+  }, [enableNavMotionOnce, isSnap]);
+
+  const handleHeaderAnimationEnd = useCallback((event: React.AnimationEvent<HTMLElement>) => {
+    if (event.target !== event.currentTarget || event.animationName !== 'navSlideDown') return;
+    enableNavMotionOnce();
+  }, [enableNavMotionOnce]);
 
   const navItems = useMemo(() => siteConfig.navItems.map(item => ({
     ...item,
@@ -100,7 +143,7 @@ export function Layout({ children }: LayoutProps) {
   }, [currentPath, indicatorInset, indicatorMaxDuration, indicatorMinDuration, indicatorPixelsPerSecond]);
 
   useEffect(() => {
-    if (isPrerendering || isIndicatorReady) return;
+    if (isSnap || isIndicatorReady) return;
 
     let rafId = 0;
     let frameCount = 0;
@@ -152,18 +195,20 @@ export function Layout({ children }: LayoutProps) {
       cancelled = true;
       cancelAnimationFrame(rafId);
     };
-  }, [currentPath, indicatorInset, isIndicatorReady, isPrerendering, updateIndicator]);
+  }, [currentPath, indicatorInset, isIndicatorReady, isSnap, updateIndicator]);
 
   useLayoutEffect(() => {
-    if (isPrerendering || !isIndicatorReady) return;
+    if (isSnap || !isIndicatorReady) return;
     updateIndicator();
-  }, [isIndicatorReady, isPrerendering, updateIndicator]);
+  }, [isIndicatorReady, isSnap, updateIndicator]);
 
   useEffect(() => {
-    if (isPrerendering || !isIndicatorReady) return;
+    if (isSnap || !isIndicatorReady) return;
     window.addEventListener('resize', updateIndicator);
     return () => window.removeEventListener('resize', updateIndicator);
-  }, [isIndicatorReady, isPrerendering, updateIndicator]);
+  }, [isIndicatorReady, isSnap, updateIndicator]);
+
+  const showStaticActiveIndicator = !isIndicatorReady;
 
   return (
     <div className="min-h-screen relative bg-background">
@@ -176,11 +221,15 @@ export function Layout({ children }: LayoutProps) {
       </div>
 
       {/* Navigation Bar */}
-      <header className="fixed top-0 left-0 right-0 z-50 nav-slide-down">
+      <header
+        className={`fixed top-0 left-0 right-0 z-50 ${isHydrated ? 'nav-slide-down' : ''}`}
+        onAnimationEnd={handleHeaderAnimationEnd}
+      >
         <div className="mx-4 mt-4">
           <nav className="max-w-4xl mx-auto bg-background/80 backdrop-blur-xl rounded-full border border-border/50 shadow-lg shadow-black/5">
-            <div ref={navContainerRef} className="relative flex items-center justify-center gap-1 px-2 py-2">
-              {!isPrerendering && isIndicatorReady && indicatorStyle.isVisible && (
+            <div ref={setNavContainerNode} className="relative flex items-center justify-center gap-1 px-2 py-2">
+              {/* 指示器依赖 getBoundingClientRect：不参与 react-snap 快照，仅在真实浏览器布局就绪后挂载 */}
+              {!isSnap && isIndicatorReady && indicatorStyle.isVisible && (
                 <motion.div
                   className="absolute left-0 top-0 rounded-full z-0 pointer-events-none bg-[hsl(var(--primary)/0.1)] dark:bg-[hsl(var(--primary)/0.14)]"
                   animate={{ x: indicatorStyle.x, y: indicatorStyle.y, width: indicatorStyle.width, height: indicatorStyle.height }}
@@ -191,6 +240,13 @@ export function Layout({ children }: LayoutProps) {
               {navItems.map((item) => {
                 const isActive = item.normalizedPath === currentPath;
                 const Icon = item.icon;
+                const itemClassName = `
+                        relative flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors
+                        ${isActive
+                          ? 'text-primary'
+                          : 'text-muted-foreground hover:text-foreground'
+                        }
+                      `;
 
                 return (
                   <Link
@@ -201,21 +257,34 @@ export function Layout({ children }: LayoutProps) {
                     }}
                     className="relative block"
                   >
-                    <motion.div
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      transition={hoverTransition}
-                      className={`
-                        flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors
-                        ${isActive
-                          ? 'text-primary'
-                          : 'text-muted-foreground hover:text-foreground'
-                        }
-                      `}
-                    >
-                      <Icon className="w-4 h-4 relative z-10" />
-                      <span className="relative z-10">{item.label}</span>
-                    </motion.div>
+                    {!enableNavMotion ? (
+                      <div className={itemClassName}>
+                        {showStaticActiveIndicator && isActive && (
+                          <span
+                            aria-hidden="true"
+                            className="absolute inset-0 rounded-full z-0 pointer-events-none bg-[hsl(var(--primary)/0.1)] dark:bg-[hsl(var(--primary)/0.14)]"
+                          />
+                        )}
+                        <Icon className="w-4 h-4 relative z-10" />
+                        <span className="relative z-10">{item.label}</span>
+                      </div>
+                    ) : (
+                      <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        transition={hoverTransition}
+                        className={itemClassName}
+                      >
+                        {showStaticActiveIndicator && isActive && (
+                          <span
+                            aria-hidden="true"
+                            className="absolute inset-0 rounded-full z-0 pointer-events-none bg-[hsl(var(--primary)/0.1)] dark:bg-[hsl(var(--primary)/0.14)]"
+                          />
+                        )}
+                        <Icon className="w-4 h-4 relative z-10" />
+                        <span className="relative z-10">{item.label}</span>
+                      </motion.div>
+                    )}
                   </Link>
                 );
               })}
