@@ -432,9 +432,11 @@ rm -rf .git      # 强制删除 .git 文件夹（彻底取消 Git 管理）
 > [!CAUTION]
 > 彻底删除 `.git` 文件夹意味着放弃所有的本地历史记录提交和分支代码，操作不可逆转，需谨慎！
 
-## 2. 推送报错：HTTP2 framing layer 错误
+## 2. 操作报错：HTTP2 framing layer 错误
 
-部分网络环境下 HTTP/2 协议不够稳定，可尝试回退为 HTTP/1.1 临时解决：
+在使用 `git clone`、`git push` 或 `git pull` 操作大仓库，或者在特定网络环境（如代理环境、网络不稳定）下，偶尔会遇到类似 `RPC failed; curl 16 Error in the HTTP2 framing layer` 的报错。
+
+此时可尝试将 Git 网络通讯协议回退为 HTTP/1.1 以临时解决此问题：
 
 ```bash
 # 全局禁用 HTTP/2

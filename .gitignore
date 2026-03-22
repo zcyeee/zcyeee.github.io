@@ -4,3 +4,4 @@ dist/
 app/dist/
 app/node_modules/
 .env
+fig/
