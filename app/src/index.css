@@ -83,6 +83,18 @@
   @apply block my-4 py-3 px-4 bg-muted/50 rounded-lg overflow-x-auto;
 }
 
+.prose .katex-display {
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.prose .katex-display > .katex {
+  display: inline-block;
+  min-width: max-content;
+}
+
 /* Code block styles */
 pre {
   @apply bg-muted/80 rounded-lg p-4 overflow-x-auto text-xs sm:text-sm;

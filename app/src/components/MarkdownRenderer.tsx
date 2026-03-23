@@ -45,7 +45,8 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
                     ),
                     // Inline code (not inside a code block)
                     code: ({ className: cls, children, ...props }) => {
-                        const isBlock = cls && cls.includes('language-');
+                        const rawText = Array.isArray(children) ? children.join('') : String(children);
+                        const isBlock = Boolean(cls?.includes('language-')) || rawText.includes('\n');
                         if (isBlock) {
                             // Block code — rendered by rehype-highlight, just pass through
                             return <code className={cls} {...props}>{children}</code>;
