@@ -307,7 +307,44 @@ echo "外部访问全局变量：$global_var"
 ---
 
 # 五、常用高级能力
-## 1. 数组操作
+## 1. 进程管理（& / nohup / wait）
+
+后台执行 `&`：
+
+```bash
+./script.sh &
+echo "后台任务 PID: $!"
+```
+
+`nohup` 防止进程因终端关闭而终止：
+
+```bash
+nohup ./long_running_script.sh > output.log 2>&1 &
+# nohup: 不受挂起信号影响
+# 2>&1: 标准输出和错误输出都重定向到 output.log
+# &: 放到后台运行
+```
+
+`wait` 等待后台任务完成：
+
+```bash
+./task1.sh &
+./task2.sh &
+wait  # 等待所有后台任务完成
+echo "所有任务结束"
+```
+
+等待指定后台进程：
+
+```bash
+./script.sh &
+PID=$!
+./other_script.sh
+wait $PID
+echo "指定进程执行完毕"
+```
+
+## 2. 数组操作
 
 ```bash
 arr=("a" "b" "c")
@@ -322,7 +359,7 @@ for element in "${arr[@]}"; do
 done
 ```
 
-## 2. 正则匹配（`=~`）
+## 3. 正则匹配（`=~`）
 
 ```bash
 email="test@example.com"
@@ -333,7 +370,36 @@ else
 fi
 ```
 
-## 3. 调试技巧
+## 4. 文本搜索（grep）
+
+基础用法：
+
+```bash
+grep "keyword" file.txt          # 在文件中搜索关键词
+grep -i "keyword" file.txt       # 忽略大小写
+grep -n "keyword" file.txt       # 显示行号
+grep -v "keyword" file.txt       # 反向匹配，显示不包含关键词的行
+```
+
+常用选项：
+
+```bash
+grep -r "keyword" ./dir/         # 递归搜索目录下所有文件
+grep -c "keyword" file.txt      # 统计匹配行数
+grep -e "pattern1" -e "pattern2" file.txt  # 多个模式匹配
+grep -E "error|warning" log.txt # 扩展正则匹配多个模式
+grep -o "pattern" file.txt       # 只输出匹配部分
+```
+
+配合管道使用：
+
+```bash
+ps aux | grep "nginx"           # 查找 nginx 进程
+dmesg | grep -i "error"         # 查找系统错误
+cat log.txt | grep "2024-01-01"  # 查找特定日期日志
+```
+
+## 5. 调试技巧
 打印执行过程：
 
 ```bash
