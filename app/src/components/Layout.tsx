@@ -49,6 +49,8 @@ export function Layout({ children }: LayoutProps) {
   useEffect(() => {
     const restorePage = sessionStorage.getItem('blogScrollRestorePage');
     if (location.pathname === '/blog' && restorePage) return;
+    const restoreArchive = sessionStorage.getItem('archiveScrollRestore');
+    if (location.pathname === '/archive' && restoreArchive) return;
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, [location.pathname]);
 
