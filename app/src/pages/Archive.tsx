@@ -12,6 +12,8 @@ const categoryStats = buildCategoryStats();
 const INITIAL_POSTS = 20;
 const LOAD_MORE_POSTS = 20;
 const TOTAL_POSTS = sortedPosts.length;
+const ARCHIVE_SCROLL_RESTORE_KEY = 'archiveScrollRestore';
+const ARCHIVE_SCROLL_Y_KEY = 'archiveScrollY';
 
 /** Slice archiveData so only posts up to `limit` are included. */
 function getVisibleArchiveData(limit: number) {
@@ -41,6 +43,23 @@ export function Archive() {
   const [visiblePostCount, setVisiblePostCount] = useState(INITIAL_POSTS);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const hasMore = visiblePostCount < TOTAL_POSTS;
+
+  const rememberScrollPosition = () => {
+    sessionStorage.setItem(ARCHIVE_SCROLL_Y_KEY, String(window.scrollY));
+    sessionStorage.setItem(ARCHIVE_SCROLL_RESTORE_KEY, '1');
+  };
+
+  useEffect(() => {
+    const shouldRestore = sessionStorage.getItem(ARCHIVE_SCROLL_RESTORE_KEY);
+    if (!shouldRestore) return;
+    const saved = sessionStorage.getItem(ARCHIVE_SCROLL_Y_KEY);
+    if (saved) {
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: Number(saved), left: 0, behavior: 'auto' });
+      });
+    }
+    sessionStorage.removeItem(ARCHIVE_SCROLL_RESTORE_KEY);
+  }, []);
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
@@ -135,7 +154,7 @@ export function Archive() {
                                   transition={hoverTransition}
                                   className="group"
                                 >
-                                  <Link to={`/blog/${post.slug}`}>
+                                  <Link to={`/blog/${post.slug}?from=archive`} onClick={rememberScrollPosition}>
                                     <Card className="cursor-pointer hover:shadow-md transition-all duration-300 border-transparent hover:border-primary/20">
                                       <CardContent className="p-3.5">
                                         <div className="flex items-center justify-between gap-3">

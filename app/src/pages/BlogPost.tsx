@@ -13,9 +13,21 @@ export function BlogPost() {
     const [searchParams] = useSearchParams();
     const { slug } = useParams<{ slug: string }>();
     const post = slug ? getPostBySlug(slug) : undefined;
+    const isFromArchive = searchParams.get('from') === 'archive';
     const pageParam = Number(searchParams.get('page'));
-    const backToBlog = Number.isFinite(pageParam) && pageParam > 1 ? `/blog?page=${pageParam}` : '/blog';
-    const relatedSuffix = Number.isFinite(pageParam) && pageParam > 1 ? `?page=${pageParam}` : '';
+    const backToList = isFromArchive
+        ? '/archive'
+        : Number.isFinite(pageParam) && pageParam > 1
+            ? `/blog?page=${pageParam}`
+            : '/blog';
+    const backButtonText = isFromArchive ? '返回归档列表' : '返回博客列表';
+    const relatedParams = new URLSearchParams();
+    if (isFromArchive) {
+        relatedParams.set('from', 'archive');
+    } else if (Number.isFinite(pageParam) && pageParam > 1) {
+        relatedParams.set('page', String(pageParam));
+    }
+    const relatedSuffix = relatedParams.toString() ? `?${relatedParams.toString()}` : '';
 
     // Lazy-load content only when this post is opened
     const [contentBySlug, setContentBySlug] = useState<Record<string, string>>({});
@@ -55,10 +67,10 @@ export function BlogPost() {
                 <div className="text-center">
                     <h1 className="text-3xl font-bold mb-4">文章未找到</h1>
                     <p className="text-muted-foreground mb-6">该文章不存在或已被删除。</p>
-                    <Link to={backToBlog}>
+                    <Link to={backToList}>
                         <Button variant="outline" className="gap-1">
                             <ArrowLeft className="w-4 h-4" />
-                            返回博客列表
+                            {backButtonText}
                         </Button>
                     </Link>
                 </div>
@@ -72,10 +84,10 @@ export function BlogPost() {
             <section className="py-4">
                 <div className="max-w-3xl md:max-w-4xl lg:max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
                     <AnimatedSection>
-                        <Link to={backToBlog}>
+                        <Link to={backToList}>
                             <Button variant="ghost" size="sm" className="gap-1 mb-4">
                                 <ArrowLeft className="w-4 h-4" />
-                                返回博客列表
+                                {backButtonText}
                             </Button>
                         </Link>
                     </AnimatedSection>
