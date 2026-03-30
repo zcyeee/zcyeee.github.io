@@ -1,5 +1,5 @@
 ---
-title: "KL 散度：从定义到直观理解"
+title: "深入理解 KL 散度"
 date: "2025-03-21"
 tags: ["KL 散度", "信息论"]
 category: "数学基础"
