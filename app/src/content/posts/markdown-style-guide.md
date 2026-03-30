@@ -1,5 +1,5 @@
 ---
-title: "Markdown 样式全览"
+title: "博客 Markdown 样式"
 date: "2025-01-01"
 tags: ["Markdown", "排版"]
 category: "工程知识"
