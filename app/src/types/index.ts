@@ -24,6 +24,7 @@ export interface Experience {
   position: string;
   startDate: string;
   endDate: string;
+  intro?: string;
   description: string[];
   location?: string;
   logo?: string;

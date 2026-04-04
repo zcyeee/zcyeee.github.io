@@ -417,6 +417,13 @@ export function Home() {
                             </div>
                           </div>
 
+                          {/* Intro */}
+                          {exp.intro && (
+                            <p className="text-sm md:text-sm text-muted-foreground">
+                              {exp.intro}
+                            </p>
+                          )}
+
                           {/* Description */}
                           <ul className="space-y-1.5">
                             {exp.description.map((item, i) => (
