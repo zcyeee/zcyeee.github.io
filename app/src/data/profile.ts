@@ -36,11 +36,12 @@ export const experiences: Experience[] = [
     company: "美团",
     position: "大模型算法实习生",
     location: "上海",
-    startDate: "2026-01",
+    startDate: "2025-12",
     endDate: "至今",
+    intro: "针对 LLM 在复杂环境下多步、多轮工具调用能力不足的问题，基于 Qwen 模型系统探索多轮Agent任务合成方法与多轮强化学习训练策略，为组内业务基模（LongCat）训练积累数据和实验经验。",
     description: [
-      "Agentic RL：",
-      "Group Memory：",
+      "基于依赖图的长序列任务合成：构建有向工具依赖图，基于拓扑排序的动态解锁采样算法生成多步调用轨迹，逆向合成自然语言任务。构建 500+ 可执行环境（包含 4500+ 工具）及 3000+ 条高质量训练数据。",
+      "多轮工具调用的强化学习：将全局轨迹奖励解耦为 Local Advantage 与 Future Advantage，引入一致性门控机制抑制虚假正向收益；在 BFCL 与 Tau2Bench 上相较 GRPO 平均提升约 5pp。",
     ]
   },
   {
@@ -49,10 +50,11 @@ export const experiences: Experience[] = [
     location: "北京",
     startDate: "2025-02",
     endDate: "2025-05",
+    intro: "针对 LLM 在注意力机制和上下文长度的局限性，初步设计并实现面向 AI 角色对话的长期记忆系统；同时搭建自动化评测框架量化模型的长期记忆能力与角色扮演能力。",
     description: [
-      "基于 Mem0 构建向量（Milvus）与图（Neo4j）双路异构记忆结构，分别维护处理事实性记忆与实体关系图谱",
-      "构建向量检索与图检索双路召回机制；设计融合相关性、时效性与重要性的多维 Re-ranking 策略，动态返回记忆信息",
-      "基于 LongMemEval 搭建端到端长期记忆自动化 QA 评测框架，最终框架相比 RAG 基线各项指标平均提升约 10%"
+      "长期记忆构建与储存：基于 Mem0 构建向量（Milvus）与图（Neo4j）双路异构记忆结构，分别维护处理事实性记忆与实体关系图谱",
+      "记忆召回与重排：构建向量检索与图检索双路召回机制；设计融合相关性、时效性与重要性的多维 Re-ranking 策略，动态返回记忆信息",
+      "长期记忆能力评测：基于 LongMemEval 搭建端到端长期记忆自动化 QA 评测框架，最终框架相比 RAG 基线各项指标平均提升约 10%"
     ]
   }
 ];
@@ -96,8 +98,8 @@ export const awards: Award[] = [
 
 export const skills: string[] = [
   // "熟悉 Python、PyTorch，掌握 Slurm、Linux、Shell、Git 等开发与任务调度环境",
-  "熟悉 PPO、GRPO、DAPO 等强化学习算法与 Verl 强化学习框架",
-  "熟悉 RAG、Agent 等 LLM 应用技术，了解 LangChain 以及 LLM 基础原理及应用",
+  "熟悉 PPO，GRPO，DAPO 等强化学习算法，具有 RL 多卡分布式训练经验，熟悉 Verl 强化学习框架",
+  "熟悉 OpenClaw，Skill，Memory 等 LLM 应用技术，了解 LangChain 以及 LLM 基础原理及应用",
   "熟悉 SQL 和 LaTeX，掌握 Python 数据分析与可视化，了解 Tableau 等工具",
 ];
 
