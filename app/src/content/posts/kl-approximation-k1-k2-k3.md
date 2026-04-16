@@ -161,7 +161,7 @@ $$
 
 ---
 
-# 六、PyTorch 实现示例
+# 六、代码实现
 
 ```python
 import torch
