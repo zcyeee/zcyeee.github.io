@@ -286,6 +286,8 @@ jobs
 
 # 四、服务器文件传输
 
+> **💡 提示**：以下提供的 `scp` 和 `rsync` 传输指令，**默认均在本地电脑终端执行**，以此实现本地与远程服务器之间的数据互传。
+
 ## 1. scp 方法（陈旧）
 
 推文件（本地 ➔ 远程）：
@@ -306,8 +308,21 @@ scp -r user@remote_ip:/remote/path/folder local_path/   # 拉取整个文件夹
 `-v`：verbose，显示传输过程细节  
 `-z`：compression，在传输过程中压缩文件数据  
 `-P`：progress，显示传输进度
+拉文件（远程 ➔ 本地）：
 ```bash
-# --exclude= 排除特定文件或目录（示例：排除 data 文件夹和所有隐藏文件）
+rsync -avzP user@remote_ip:/remote/path/file local_path/          # 拉取单个文件
+rsync -avzP user@remote_ip:/remote/path/folder/ local_path/       # 拉取整个文件夹
+```
+
+推文件（本地 ➔ 远程）：
+```bash
+rsync -avzP local_file user@remote_ip:/remote/path/               # 推送单个文件
+rsync -avzP local_folder/ user@remote_ip:/remote/path/folder/     # 推送整个文件夹
+```
+
+`--exclude=` 排除特定文件或目录：
+```bash
+# 排除 data 文件夹和所有隐藏文件，将远程目录同步到本地
 rsync -avzP --exclude='data/' --exclude='.*' user@remote_ip:/remote/path/ local_path/
 ```
 
