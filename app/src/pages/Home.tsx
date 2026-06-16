@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { personalInfo, education, experiences, projects, awards, skills, research } from '@/data/profile';
-import { MapPin, Mail, Github, Linkedin, ExternalLink, Award, Briefcase, Code, GraduationCap, Sparkles, Cpu, MessageCircle, FileText, X, Star } from 'lucide-react';
+import { MapPin, Mail, Github, Linkedin, ExternalLink, Award, Briefcase, Building2, Code, GraduationCap, Sparkles, Cpu, MessageCircle, FileText, X, Star } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -396,22 +396,38 @@ export function Home() {
                         <div className="flex flex-col gap-2.5">
                           {/* Header */}
                           <div className="flex flex-col gap-1">
-                            <div className="flex items-start justify-between gap-2">
-                              <h3 className="text-base md:text-lg font-semibold group-hover:text-primary transition-colors duration-300">
-                                {exp.company}
-                              </h3>
-                              <span className="text-xs md:text-sm text-muted-foreground text-right whitespace-nowrap mt-0.5">
-                                {exp.startDate} — {exp.endDate}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className="text-sm font-medium text-foreground/60">
-                                {exp.position}
-                              </span>
-                              {exp.location && (
-                                <span className="flex items-center gap-0.5 text-xs text-muted-foreground/70">
-                                  <MapPin className="w-3 h-3" />
-                                  {exp.location}
+                            <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                              <div className="min-w-0 flex flex-col gap-1">
+                                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                  <h3 className="text-base md:text-lg font-semibold group-hover:text-primary transition-colors duration-300">
+                                    {exp.company}
+                                  </h3>
+                                  {exp.department && (
+                                    <span className="flex items-center gap-0.5 text-xs md:text-sm text-muted-foreground/70">
+                                      <Building2 className="w-3 h-3" />
+                                      {exp.department}
+                                    </span>
+                                  )}
+                                </div>
+                                {(exp.position || exp.location) && (
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    {exp.position && (
+                                      <span className="text-sm font-medium text-foreground/60">
+                                        {exp.position}
+                                      </span>
+                                    )}
+                                    {exp.location && (
+                                      <span className="flex items-center gap-0.5 text-xs text-muted-foreground/70">
+                                        <MapPin className="w-3 h-3" />
+                                        {exp.location}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                              {(exp.startDate || exp.endDate) && (
+                                <span className="self-start text-[13px] md:text-sm text-muted-foreground whitespace-nowrap sm:self-auto sm:text-right sm:mt-0.5">
+                                  {[exp.startDate, exp.endDate].filter(Boolean).join(' — ')}
                                 </span>
                               )}
                             </div>
@@ -425,17 +441,19 @@ export function Home() {
                           )}
 
                           {/* Description */}
-                          <ul className="space-y-1.5">
-                            {exp.description.map((item, i) => (
-                              <li
-                                key={i}
-                                className="flex items-start gap-2 text-sm md:text-sm text-muted-foreground"
-                              >
-                                <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0" />
-                                {item}
-                              </li>
-                            ))}
-                          </ul>
+                          {exp.description && exp.description.length > 0 && (
+                            <ul className="space-y-1.5">
+                              {exp.description.map((item, i) => (
+                                <li
+                                  key={i}
+                                  className="flex items-start gap-2 text-sm md:text-sm text-muted-foreground"
+                                >
+                                  <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0" />
+                                  {item}
+                                </li>
+                              ))}
+                            </ul>
+                          )}
                         </div>
                       </CardContent>
                     </Card>

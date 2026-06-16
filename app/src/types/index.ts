@@ -21,11 +21,12 @@ export interface Education {
 
 export interface Experience {
   company: string;
-  position: string;
-  startDate: string;
-  endDate: string;
+  department?: string;
+  position?: string;
+  startDate?: string;
+  endDate?: string;
   intro?: string;
-  description: string[];
+  description?: string[];
   location?: string;
   logo?: string;
 }

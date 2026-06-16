@@ -33,7 +33,19 @@ export const education: Education[] = [
 
 export const experiences: Experience[] = [
   {
+    company: "腾讯",
+    department: "混元 多模态模型部",
+    position: "大模型算法实习生",
+    location: "上海",
+    startDate: "2026-06",
+    endDate: "至今",
+    description: [
+      "长期记忆消费相关..."
+    ]
+  },
+  {
     company: "美团",
+    department: "Longcat Interaction Team",
     position: "大模型算法实习生",
     location: "上海",
     startDate: "2025-12",
