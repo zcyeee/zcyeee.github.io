@@ -140,7 +140,7 @@ export function Blog() {
       <section className="pt-4 pb-2 md:py-4">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <AnimatedSection>
-            <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex flex-col gap-3 md:gap-4">
               {/* Search */}
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />

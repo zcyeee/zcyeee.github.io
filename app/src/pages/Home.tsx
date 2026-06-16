@@ -396,14 +396,14 @@ export function Home() {
                         <div className="flex flex-col gap-2.5">
                           {/* Header */}
                           <div className="flex flex-col gap-1">
-                            <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                            <div className="flex items-start justify-between gap-3">
                               <div className="min-w-0 flex flex-col gap-1">
-                                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                <div className="flex flex-wrap items-center gap-x-2.5 md:gap-x-3 gap-y-1">
                                   <h3 className="text-base md:text-lg font-semibold group-hover:text-primary transition-colors duration-300">
                                     {exp.company}
                                   </h3>
                                   {exp.department && (
-                                    <span className="flex items-center gap-0.5 text-xs md:text-sm text-muted-foreground/70">
+                                    <span className="hidden sm:flex items-center gap-0.5 text-sm text-muted-foreground/70">
                                       <Building2 className="w-3 h-3" />
                                       {exp.department}
                                     </span>
@@ -417,7 +417,7 @@ export function Home() {
                                       </span>
                                     )}
                                     {exp.location && (
-                                      <span className="flex items-center gap-0.5 text-xs text-muted-foreground/70">
+                                      <span className="hidden sm:flex items-center gap-0.5 text-xs text-muted-foreground/70">
                                         <MapPin className="w-3 h-3" />
                                         {exp.location}
                                       </span>
@@ -425,10 +425,20 @@ export function Home() {
                                   </div>
                                 )}
                               </div>
-                              {(exp.startDate || exp.endDate) && (
-                                <span className="self-start text-[13px] md:text-sm text-muted-foreground whitespace-nowrap sm:self-auto sm:text-right sm:mt-0.5">
-                                  {[exp.startDate, exp.endDate].filter(Boolean).join(' — ')}
-                                </span>
+                              {(exp.startDate || exp.endDate || exp.department) && (
+                                <div className="flex flex-shrink-0 max-w-[48%] flex-col items-end gap-1 text-right sm:max-w-none">
+                                  {(exp.startDate || exp.endDate) && (
+                                    <span className="text-[13px] md:text-sm text-muted-foreground whitespace-nowrap md:mt-0.5">
+                                      {[exp.startDate, exp.endDate].filter(Boolean).join(' — ')}
+                                    </span>
+                                  )}
+                                  {exp.department && (
+                                    <span className="flex items-center justify-end gap-0.5 text-xs text-muted-foreground/70 sm:hidden">
+                                      <Building2 className="w-3 h-3 flex-shrink-0" />
+                                      {exp.department}
+                                    </span>
+                                  )}
+                                </div>
                               )}
                             </div>
                           </div>
