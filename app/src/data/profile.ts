@@ -49,7 +49,7 @@ export const experiences: Experience[] = [
     position: "大模型算法实习生",
     location: "上海",
     startDate: "2025-12",
-    endDate: "至今",
+    endDate: "2026-05",
     intro: "针对 LLM 在复杂环境下多步、多轮工具调用能力不足的问题，基于 Qwen 模型系统探索多轮 Agent 任务合成方法与多轮强化学习训练策略，为组内业务基模（LongCat）训练积累数据和实验经验。",
     description: [
       "基于依赖图的长序列任务合成：构建有向工具依赖图，基于拓扑排序的动态解锁采样算法生成多步调用轨迹，逆向合成自然语言任务。构建 500+ 可执行 MCP 环境（包含 4500+ 工具）及 3000+ 条高质量训练数据",

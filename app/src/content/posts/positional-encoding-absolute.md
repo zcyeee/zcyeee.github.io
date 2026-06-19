@@ -3,12 +3,12 @@ title: "绝对位置编码"
 date: "2025-09-01"
 tags: ["Transformer", "位置编码", "绝对位置编码"]
 category: "大语言模型"
-excerpt: "从 Self-Attention 的置换等变性出发，系统梳理可学习绝对位置编码与 Sinusoidal 位置编码的公式、直觉、相对位移性质和局限。"
+excerpt: "Self-Attention 本身缺少顺序信息，绝对位置编码通过可学习向量或 Sinusoidal 函数为模型注入位置差异。"
 ---
 
 Transformer 的核心计算是 Self-Attention。它擅长在序列内部建立全局依赖，但注意力本身并不知道 token 出现在第几个位置。如果不额外注入位置信息，模型很难区分“我喜欢你”和“你喜欢我”这类由顺序决定语义的句子。
 
-本文从 Self-Attention 的置换等变性出发，介绍为什么必须注入位置信息，并重点梳理两类经典绝对位置编码：可学习位置向量与 Sinusoidal 位置编码。
+Self-Attention 的置换等变性解释了为什么必须额外注入位置信息。下面重点梳理两类经典绝对位置编码：可学习位置向量与 Sinusoidal 位置编码。
 
 ---
 
