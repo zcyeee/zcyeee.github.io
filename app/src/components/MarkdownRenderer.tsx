@@ -4,6 +4,7 @@ import rehypeKatex from 'rehype-katex';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
+import remarkCjkFriendly from 'remark-cjk-friendly';
 import 'katex/dist/katex.min.css';
 import 'highlight.js/styles/github-dark.css';
 
@@ -16,7 +17,7 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
     return (
         <div className={`prose prose-sm prose-slate dark:prose-invert max-w-none text-[0.9rem] sm:text-[14.5px] md:text-[15px] lg:text-[15.5px] ${className}`}>
             <ReactMarkdown
-                remarkPlugins={[remarkGfm, remarkMath]}
+                remarkPlugins={[remarkGfm, remarkCjkFriendly, remarkMath]}
                 rehypePlugins={[rehypeRaw, rehypeKatex, rehypeHighlight]}
                 components={{
                     // Markdown # → rendered as <h2> (page title already occupies <h1>)

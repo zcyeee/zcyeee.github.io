@@ -1,14 +1,14 @@
 ---
-title: "强化学习理论基础：从 MDP 到 LLM RL"
+title: "强化学习基础：从 MDP 到 LLM RL"
 date: "2025-08-19"
 tags: ["强化学习", "MDP", "价值函数", "Actor-Critic", "LLM RL"]
 category: "强化学习"
 excerpt: "MDP、价值函数与策略优化构成强化学习的基本框架，value-based、policy-based、actor-critic 三类方法则对应不同的求解思路。"
 ---
 
-强化学习（Reinforcement Learning, RL）研究的是智能体如何在环境中通过交互获得反馈，并学习一个能够最大化长期收益的决策策略。与监督学习不同，RL 的监督信号通常不是逐样本标签，而是由环境返回的奖励；与普通优化问题不同，当前动作不仅影响当前奖励，也会影响后续状态分布和未来收益。
+强化学习（Reinforcement Learning）研究智能体如何通过与环境交互、最大化长期累积回报来学习决策策略。不同于普通优化问题，RL 的奖励往往延迟且稀疏，且当前动作会影响后续状态分布。
 
-文章先建立马尔可夫决策过程（MDP）和价值函数的基本形式，再梳理 value-based、policy-based、actor-critic 三类方法，最后从宏观层面理解 LLM 后训练中的 RL 方法。
+本文首先介绍马尔可夫决策过程（MDP）和价值函数的基本形式，并进一步梳理 value-based、policy-based、actor-critic 三类方法，最后从宏观层面理解 LLM 后训练中的 RL 方法。
 
 ---
 
@@ -84,6 +84,17 @@ $$
 $$
 
 **核心问题**：智能体的动作会改变后续状态分布，因此优化目标中的数据分布本身也依赖策略。这是 RL 相比普通监督学习更难的根本原因之一。
+
+## 4. 探索与利用
+
+由于训练数据由智能体自己的动作产生，RL 始终面临**探索与利用（exploration vs exploitation）**的矛盾：
+
+- **利用（exploitation）**：选择当前估计收益最高的动作，以获取即时回报；
+- **探索（exploration）**：尝试尚未充分评估的动作，以发现可能更优的策略。
+
+如果只利用，智能体可能过早收敛到次优策略；如果只探索，又无法把已学到的知识转化为收益。常见的折中方式包括 $\epsilon$-greedy（以小概率随机选择动作）、softmax/Boltzmann 采样，以及在策略中显式保留随机性（随机策略本身就带有探索能力）。
+
+**与监督学习的区别**：监督学习的数据分布是固定的，而 RL 的数据分布由策略决定，探索不足会导致某些区域的数据始终采集不到，从而无法纠正对应的价值或策略估计。
 
 ---
 
@@ -222,7 +233,39 @@ $$
 
 **直观含义**：如果实际得到的“当前奖励 + 下一状态最佳价值”高于当前估计，就提高 $Q(s_t,a_t)$；反之则降低。
 
-## 3. 特点
+## 3. 探索策略：ε-greedy
+
+Q-learning 更新时使用 $\max_{a'}Q$，但在与环境交互、采集数据时仍需探索，否则某些动作的价值永远得不到修正。最常用的做法是 $\epsilon$-greedy：
+
+$$
+a_t=
+\begin{cases}
+\arg\max_a Q(s_t,a), & \text{以概率 } 1-\epsilon\\
+\text{随机动作}, & \text{以概率 } \epsilon
+\end{cases}
+$$
+
+实际训练中 $\epsilon$ 通常从较大值逐渐衰减：早期多探索，后期多利用。
+
+## 4. On-Policy 与 Off-Policy
+
+按照“采集数据的行为策略”与“被优化的目标策略”是否一致，RL 算法可分为两类：
+
+- **On-policy**：采集数据的行为策略与被更新的目标策略相同，例如 SARSA、REINFORCE、PPO；
+- **Off-policy**：行为策略与目标策略可以不同，从而能复用历史经验或其他策略产生的数据，例如 Q-learning、DQN。
+
+Q-learning 是典型的 off-policy 方法：采集数据时可用 $\epsilon$-greedy 探索，更新目标却用 $\max_{a'}Q$ 这一贪心策略。**off-policy 的好处是样本效率高（可配合经验回放复用数据），代价是训练稳定性更难保证。**
+
+## 5. 从 Q-learning 到 DQN
+
+当状态空间很大（如图像输入）时，无法再用表格存储 $Q(s,a)$。DQN 用神经网络 $Q_\theta(s,a)$ 近似动作价值，并引入两项关键技术稳定训练：
+
+- **经验回放（experience replay）**：把交互产生的 $(s,a,r,s')$ 存入缓冲区，训练时随机采样，打破样本间的时间相关性，同时提高数据利用率；
+- **目标网络（target network）**：用一个更新较慢的 $Q_{\theta^-}$ 计算 TD 目标 $r+\gamma\max_{a'}Q_{\theta^-}(s',a')$，避免目标值随参数频繁抖动而导致训练发散。
+
+后续的 Double DQN、Dueling DQN、Prioritized Replay 等都是在此基础上的改进。
+
+## 6. 特点
 
 Value-based 方法的优势：
 
@@ -286,7 +329,32 @@ $$
 \right]
 $$
 
-## 3. 特点
+## 3. REINFORCE
+
+REINFORCE 是最基础的策略梯度算法，直接用蒙特卡洛回报 $G_t$ 作为对 $Q^\pi(s_t,a_t)$ 的无偏估计：
+
+$$
+\theta \leftarrow \theta + \alpha\, G_t\, \nabla_\theta\log\pi_\theta(a_t|s_t)
+$$
+
+它完全 on-policy：每轮用当前策略采样若干完整轨迹，按上式更新后再重新采样。优点是实现简单、估计无偏；缺点是 $G_t$ 来自整条轨迹的随机回报，**方差很大**，导致收敛慢、训练不稳定。
+
+## 4. Baseline 与方差降低
+
+降低方差的经典技巧是从回报中减去一个只依赖状态的**基线（baseline）** $b(s)$：
+
+$$
+\nabla_\theta J(\theta)
+=
+\mathbb{E}
+\left[
+\nabla_\theta \log \pi_\theta(a_t|s_t)\,\big(G_t-b(s_t)\big)
+\right]
+$$
+
+由于 $\mathbb{E}_{a\sim\pi}[\nabla_\theta\log\pi_\theta(a|s)]=0$，**减去任意只依赖状态的 $b(s)$ 都不改变梯度的期望（仍然无偏）**，却能显著降低方差。最常用的基线就是状态价值 $V^\pi(s)$，此时 $G_t-V^\pi(s_t)$ 正是对优势函数 $A^\pi(s_t,a_t)$ 的估计——这也正是下一章 Actor-Critic 的出发点。
+
+## 5. 特点
 
 Policy-based 方法的优势：
 
@@ -339,7 +407,7 @@ $$
 \right]
 $$
 
-相比直接使用 $Q^\pi(s,a)$，使用优势函数通常可以降低梯度方差。
+相比直接使用 $Q^\pi(s,a)$，使用优势函数通常可以降低梯度方差。这正是 Policy-Based 一章中 baseline 思想的体现：以 $V^\pi(s)$ 作为基线，$A^\pi=Q^\pi-V^\pi$ 既保持无偏，又削减了方差。
 
 ## 3. TD Error 作为优势估计
 
@@ -363,11 +431,11 @@ $$
 
 ## 4. 综合对比
 
-| 方法 | 学习对象 | 动作选择 | 优势 | 局限 |
-|------|----------|----------|------|------|
-| Value-based | $Q(s,a)$ | $\arg\max_a Q(s,a)$ | 样本效率高，适合离散动作 | 难处理连续或超大动作空间 |
-| Policy-based | $\pi_\theta(a|s)$ | 从策略分布采样 | 可直接优化随机策略 | 方差大，样本效率低 |
-| Actor-Critic | 策略 + 价值函数 | Actor 输出动作 | 兼顾表达能力与稳定性 | 实现复杂，对价值估计敏感 |
+| 方法 | 学习对象 | 动作选择 | 典型方法 | 优势 | 局限 |
+|------|----------|----------|----------|------|------|
+| Value-based | $Q(s,a)$ | $\arg\max_a Q(s,a)$ | Q-learning、DQN | 样本效率高，适合离散动作 | 难处理连续或超大动作空间 |
+| Policy-based | $\pi_\theta(a\mid s)$ | 从策略分布采样 | REINFORCE、策略梯度 | 可直接优化随机策略 | 方差大，样本效率低 |
+| Actor-Critic | 策略 + 价值函数 | Actor 输出动作 | A2C、A3C、PPO | 兼顾表达能力与稳定性 | 实现复杂，对价值估计敏感 |
 
 **关键结论**：Actor-Critic 的核心价值在于用 Critic 降低策略梯度方差，同时保留 Actor 直接学习策略分布的能力。
 
@@ -383,7 +451,7 @@ $$
 |------|----------|
 | 状态 $s_t$ | prompt 加上当前已生成 token 前缀 |
 | 动作 $a_t$ | 下一个 token |
-| 策略 $\pi_\theta(a_t|s_t)$ | 当前语言模型的 next-token 分布 |
+| 策略 $\pi_\theta(a_t\mid s_t)$ | 当前语言模型的 next-token 分布 |
 | 轨迹 $\tau$ | 一段完整回复 |
 | 奖励 $R$ | 奖励模型、规则奖励、人类偏好或任务指标 |
 | 参考策略 $\pi_{\text{ref}}$ | SFT 模型或冻结基座模型 |
@@ -402,7 +470,7 @@ $$
 
 **核心问题**：LLM 的动作空间是整个词表，轨迹长度可能很长，而奖励通常只在完整回复结束后给出。这使得 LLM RL 具有高维动作、长时序信用分配和稀疏奖励等困难。
 
-## 2. 为什么不用普通 Value-Based 方法
+## 2. Value-Based 的局限性
 
 从形式上看，也可以定义 token 级动作价值：
 
@@ -451,6 +519,18 @@ $$
 
 **直观含义**：模型既要提高高奖励回复的概率，又不能为了追求奖励而跑到参考模型极低概率的区域。
 
+**两种等价的 KL 实现位置**：上式把 KL 写成目标函数中**独立的一项**，便于理解；但工程实现中，PPO 通常把 KL 惩罚**折算进逐 token 奖励**——只在序列末尾给出奖励模型分数，并在每一步额外减去一项 KL 惩罚：
+
+$$
+r_t=
+\begin{cases}
+-\beta\log\dfrac{\pi_\theta(y_t\mid x,y_{<t})}{\pi_{\text{ref}}(y_t\mid x,y_{<t})}, & t<T\\
+R(x,y)-\beta\log\dfrac{\pi_\theta(y_T\mid x,y_{<T})}{\pi_{\text{ref}}(y_T\mid x,y_{<T})}, & t=T
+\end{cases}
+$$
+
+这样 KL 约束就转化为每个 token 的即时奖励，直接进入后续的优势估计。两种写法优化目标一致，只是一个写在序列级、一个落到 token 级，初次对照代码时容易困惑。
+
 ## 4. PPO 与 Actor-Critic
 
 PPO 是 LLM RLHF 中经典使用的策略优化方法，本质上属于 Actor-Critic 框架：
@@ -467,6 +547,8 @@ r_t(\theta)=
 \frac{\pi_\theta(a_t|s_t)}
 {\pi_{\theta_{\text{old}}}(a_t|s_t)}
 $$
+
+这个比值本质来自**重要性采样**：策略梯度本是 on-policy 的，但为了用同一批采样数据做多次更新，PPO 用旧策略 $\pi_{\theta_{\text{old}}}$ 采集数据，再用比值 $r_t(\theta)$ 把期望校正到新策略 $\pi_\theta$ 上。当比值偏离 1 太多时，重要性采样的方差会急剧增大，这也是需要 clip 的根本原因（更完整的推导见后续 PPO 专题文章）。
 
 并通过 clip 机制限制单次更新幅度，避免策略突然偏移：
 
@@ -499,6 +581,8 @@ $$
 
 **直观含义**：不再要求模型准确估计某个前缀状态的绝对价值，而是在同组候选回复之间比较谁更好。
 
+需要注意，$A_i$ 是**序列级**的标量优势：同一条回复内的所有 token 共享同一个 $A_i$（broadcast 到各 token 位置），再代入 PPO 式的 clip 目标进行更新。这样既省去了 Critic，又复用了 PPO 的稳定化机制。
+
 这种思路适合数学推理、代码生成、可验证任务等场景，因为奖励可以由规则、单元测试或答案验证器给出。
 
 ## 6. DPO 类方法的位置
@@ -514,46 +598,3 @@ DPO（Direct Preference Optimization）等偏好优化方法通常不显式采�
 - SFT：模仿数据分布，不显式区分偏好强弱；
 - Reward Model + RL：先学习偏好评分，再用该评分驱动策略改进。
 
----
-
-# 七、总结
-
-强化学习可以从 MDP 开始理解：智能体在状态中选择动作，环境返回奖励和新状态，目标是最大化长期折扣回报。
-
-价值函数是连接即时奖励与长期收益的核心工具：
-
-$$
-V^\pi(s)
-=
-\mathbb{E}_\pi
-\left[
-r_t+\gamma V^\pi(s_{t+1})
-\mid s_t=s
-\right]
-$$
-
-基于价值函数和策略参数化方式，经典 RL 方法大致分为三类：
-
-| 类别 | 核心问题 | 典型方法 |
-|------|----------|----------|
-| Value-based | 如何估计动作长期价值 | Q-learning、DQN |
-| Policy-based | 如何直接提高好动作概率 | REINFORCE、策略梯度 |
-| Actor-Critic | 如何用价值估计稳定策略优化 | A2C、A3C、PPO |
-
-在 LLM 后训练中，状态是文本前缀，动作是下一个 token，策略是语言模型分布，奖励通常来自偏好模型、规则验证器或任务指标。由于动作空间巨大、奖励稀疏且生成质量依赖完整分布，LLM RL 更常采用 policy-based 或 actor-critic 风格的方法，而不是传统 value-based 方法。
-
-**核心脉络**可以概括为：
-
-$$
-\text{MDP}
-\rightarrow
-\text{价值函数}
-\rightarrow
-\text{策略梯度}
-\rightarrow
-\text{Actor-Critic}
-\rightarrow
-\text{PPO / GRPO / LLM RL}
-$$
-
-这篇文章提供的是 PPO、GAE、KL 约束等后续内容的前置框架：先理解 RL 中状态、动作、奖励、价值和策略的关系，再看具体算法时，公式中的每一项才有明确含义。
