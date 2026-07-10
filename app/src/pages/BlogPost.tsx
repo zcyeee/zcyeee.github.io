@@ -120,7 +120,7 @@ export function BlogPost() {
             <section className="pt-4 pb-0">
                 <div className="max-w-3xl md:max-w-4xl lg:max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
                     <AnimatedSection delay={0.2}>
-                        <Card className="border-transparent">
+                        <Card className="border-border/50 bg-card/90 shadow-md shadow-primary/5 dark:bg-card/80 dark:shadow-black/20">
                             <CardContent className="p-4 md:p-6">
                                 {loadError ? (
                                     <p className="text-destructive text-sm">内容加载失败，请刷新页面重试。</p>
@@ -177,7 +177,7 @@ export function BlogPost() {
                                     {relatedPosts.map((related) => (
                                         <motion.div key={related.slug} whileHover={{ y: -4 }} transition={hoverTransition}>
                                             <Link to={`/blog/${related.slug}${relatedSuffix}`}>
-                                                <Card className="hover:border-primary/30 transition-colors cursor-pointer">
+                                                <Card className="cursor-pointer border-border/40 hover:border-primary/30 hover:shadow-md hover:shadow-primary/10 transition-all duration-300">
                                                     <CardContent className="p-4 flex items-center justify-between">
                                                         <div>
                                                             <p className="font-medium hover:text-primary transition-colors">{related.title}</p>

@@ -4,6 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Home, BookOpen, Camera, Archive } from 'lucide-react';
 import { siteConfig } from '@/data/siteConfig';
 import { isReactSnapPrerender } from '@/lib/prerender';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 const iconMap: Record<string, React.ElementType> = {
   Home,
@@ -213,13 +214,14 @@ export function Layout({ children }: LayoutProps) {
   const showStaticActiveIndicator = !isIndicatorReady;
 
   return (
-    <div className="min-h-screen relative bg-background">
+    <div className="min-h-screen relative bg-background transition-colors duration-300">
       {/* Background Effects */}
       <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.02] via-background to-secondary/[0.03]" />
-        <div className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px]" />
-        <div className="absolute top-1/3 -left-40 w-[400px] h-[400px] bg-secondary/8 rounded-full blur-[100px]" />
-        <div className="absolute -bottom-40 right-1/4 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.045),transparent_34%),radial-gradient(circle_at_85%_15%,hsl(var(--accent)/0.24),transparent_30%),linear-gradient(135deg,hsl(var(--background)),hsl(var(--secondary)/0.22)_48%,hsl(var(--background)))] dark:bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.045),transparent_34%),radial-gradient(circle_at_85%_10%,hsl(var(--accent)/0.08),transparent_30%),linear-gradient(135deg,hsl(var(--background)),hsl(var(--background))_48%,hsl(var(--muted)/0.16))]" />
+        <div className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-primary/5 dark:bg-primary/5 rounded-full blur-[120px]" />
+        <div className="absolute top-1/3 -left-40 w-[400px] h-[400px] bg-accent/20 dark:bg-accent/5 rounded-full blur-[100px]" />
+        <div className="absolute -bottom-40 right-1/4 w-[400px] h-[400px] bg-secondary/30 dark:bg-muted/10 rounded-full blur-[100px]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,hsl(var(--background)/0.15),hsl(var(--background)/0.78))]" />
       </div>
 
       {/* Navigation Bar */}
@@ -228,12 +230,12 @@ export function Layout({ children }: LayoutProps) {
         onAnimationEnd={handleHeaderAnimationEnd}
       >
         <div className="mx-4 mt-4">
-          <nav className="max-w-4xl mx-auto bg-background/80 backdrop-blur-xl rounded-full border border-border/50 shadow-lg shadow-black/5">
+          <nav className="max-w-4xl mx-auto bg-card/75 backdrop-blur-xl rounded-full border border-border/60 shadow-lg shadow-primary/5 dark:shadow-black/25">
             <div ref={setNavContainerNode} className="relative flex items-center justify-center gap-1 px-2 py-2">
               {/* 指示器依赖 getBoundingClientRect：不参与 react-snap 快照，仅在真实浏览器布局就绪后挂载 */}
               {!isSnap && isIndicatorReady && indicatorStyle.isVisible && (
                 <motion.div
-                  className="absolute left-0 top-0 rounded-full z-0 pointer-events-none bg-[hsl(var(--primary)/0.1)] dark:bg-[hsl(var(--primary)/0.14)]"
+                  className="absolute left-0 top-0 rounded-full z-0 pointer-events-none bg-[hsl(var(--primary)/0.12)] shadow-sm shadow-primary/10 dark:bg-[hsl(var(--primary)/0.18)]"
                   animate={{ x: indicatorStyle.x, y: indicatorStyle.y, width: indicatorStyle.width, height: indicatorStyle.height }}
                   initial={false}
                   transition={indicatorTransition}
@@ -264,7 +266,7 @@ export function Layout({ children }: LayoutProps) {
                         {showStaticActiveIndicator && isActive && (
                           <span
                             aria-hidden="true"
-                            className="absolute inset-0 rounded-full z-0 pointer-events-none bg-[hsl(var(--primary)/0.1)] dark:bg-[hsl(var(--primary)/0.14)]"
+                            className="absolute inset-0 rounded-full z-0 pointer-events-none bg-[hsl(var(--primary)/0.12)] shadow-sm shadow-primary/10 dark:bg-[hsl(var(--primary)/0.18)]"
                           />
                         )}
                         <Icon className="w-4 h-4 relative z-10" />
@@ -280,7 +282,7 @@ export function Layout({ children }: LayoutProps) {
                         {showStaticActiveIndicator && isActive && (
                           <span
                             aria-hidden="true"
-                            className="absolute inset-0 rounded-full z-0 pointer-events-none bg-[hsl(var(--primary)/0.1)] dark:bg-[hsl(var(--primary)/0.14)]"
+                            className="absolute inset-0 rounded-full z-0 pointer-events-none bg-[hsl(var(--primary)/0.12)] shadow-sm shadow-primary/10 dark:bg-[hsl(var(--primary)/0.18)]"
                           />
                         )}
                         <Icon className="w-4 h-4 relative z-10" />
@@ -290,6 +292,7 @@ export function Layout({ children }: LayoutProps) {
                   </Link>
                 );
               })}
+              <ThemeToggle />
             </div>
           </nav>
         </div>

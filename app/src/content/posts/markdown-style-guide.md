@@ -72,7 +72,40 @@ excerpt: "展示博客系统支持的所有 Markdown 格式与样式，可作为
 
 # 六、代码块
 
-支持多种语言的语法高亮（基于 `highlight.js`，主题 `github-dark`）。
+代码块分为两类：真实代码块和展示型文本块。
+
+- 真实代码块：使用 `python`、`typescript`、`bash`、`json` 等语言标识，会使用黑色背景和语法高亮（基于 `highlight.js`，主题 `github-dark`）。
+- 展示型文本块：使用 `text`、`txt`、`plain`、`plaintext` 或不写语言标识，会使用柔和背景，适合展示流程、配置项、URL、命令输出或字段说明。
+
+## 展示型文本块
+
+当代码块只是为了展示信息，而不是强调“代码”本身时，推荐使用 `text`：
+
+````markdown
+```text
+本地图片 -> PicGo -> Cloudflare R2 Bucket -> 自定义域名访问
+```
+````
+
+渲染效果如下：
+
+```text
+本地图片 -> PicGo -> Cloudflare R2 Bucket -> 自定义域名访问
+```
+
+配置项、字段映射、链接样例也适合使用 `text`：
+
+```text
+上传工具：PicGo
+对象存储：Cloudflare R2
+Bucket：blog-fig
+访问域名：https://img.example.com
+期望链接：https://img.example.com/img/xxx.jpg
+```
+
+## 真实代码块
+
+写代码示例时请标注具体语言名，这样会启用黑底代码块和语法高亮。
 
 ## Python
 
@@ -261,7 +294,7 @@ def attention(Q, K, V):
 
 1. **随意使用 `#` 标题**：不用再避开一次标题啦！由于渲染层会自动适配级联下调（将 `#` 转为 `<h2>`，`##` 转为 `<h3>` 等），请放心从 `#` 起步写作。
 2. **数学公式**：行内用 `$...$`，块级用 `$$...$$`，注意美元符号不要有多余空格
-3. **代码块语言标识**：尽量写准确语言名（`python`、`typescript`、`bash` 等），否则无法高亮
+3. **代码块语言标识**：真实代码请写准确语言名（`python`、`typescript`、`bash` 等）以启用黑底高亮；展示流程、配置、URL 等普通文本时请用 `text` / `plaintext`
 4. **图片**：推荐使用外链 CDN，`alt` 会作为图注展示
 
 ---

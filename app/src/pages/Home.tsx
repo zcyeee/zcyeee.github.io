@@ -60,16 +60,16 @@ export function Home() {
         {/* Hero Section */}
         <section className="relative pt-7 pb-9 md:py-13">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col md:flex-row items-center gap-6 md:gap-10">
+            <div className="grid grid-cols-1 items-center gap-6 md:grid-cols-[8rem_minmax(0,1fr)] md:gap-8 lg:grid-cols-[10rem_minmax(0,1fr)] lg:gap-10">
               {/* Avatar */}
               <motion.div
                 initial={{ opacity: 0, scale: 0.5 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
-                className="relative"
+                className="relative justify-self-center md:justify-self-start"
               >
                 <motion.div
-                  className="w-28 h-28 md:w-40 md:h-40 rounded-full overflow-hidden ring-4 ring-primary/20 shadow-2xl"
+                  className="w-28 h-28 md:w-32 md:h-32 lg:w-40 lg:h-40 rounded-full overflow-hidden ring-4 ring-primary/20 shadow-2xl"
                   whileHover={{ scale: 1.05, rotate: 2 }}
                   transition={{ duration: 0.3 }}
                 >
@@ -83,9 +83,9 @@ export function Home() {
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ delay: 0.5, duration: 0.3 }}
-                  className="absolute -bottom-1 -right-1 w-8 h-8 md:w-10 md:h-10 bg-primary rounded-full flex items-center justify-center shadow-lg"
+                  className="absolute -bottom-1 -right-1 w-8 h-8 md:w-9 md:h-9 lg:w-10 lg:h-10 rounded-full border border-primary/20 bg-card/90 text-primary shadow-md shadow-primary/10 backdrop-blur-sm flex items-center justify-center dark:bg-card/80"
                 >
-                  <Sparkles className="w-4 h-4 md:w-5 md:h-5 text-primary-foreground" />
+                  <Sparkles className="w-4 h-4 lg:w-5 lg:h-5" />
                 </motion.div>
 
                 {/* Decorative ring */}
@@ -102,7 +102,7 @@ export function Home() {
                   initial={{ opacity: 0, y: 30 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.2 }}
-                  className="text-2xl md:text-3xl font-bold mb-2 tracking-wide bg-gradient-to-r from-foreground via-foreground to-foreground/70 bg-clip-text text-transparent"
+                  className="mb-1.5 font-display text-[1.75rem] font-semibold tracking-[0.08em] text-foreground/90 md:text-[2rem]"
                 >
                   {personalInfo.name}
                 </motion.h1>
@@ -111,7 +111,7 @@ export function Home() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.3 }}
-                  className="text-sm md:text-base text-muted-foreground mb-3 italic"
+                  className="mb-3 font-display text-sm tracking-[0.06em] text-muted-foreground md:text-[15px]"
                 >
                   {personalInfo.motto}
                 </motion.p>
@@ -130,14 +130,14 @@ export function Home() {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.5 }}
-                  className="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-4"
+                  className="mb-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 md:justify-start"
                 >
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">
-                    <MapPin className="w-3 h-3" />
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground/80">
+                    <MapPin className="w-3 h-3 text-primary/60" />
                     {personalInfo.location}
                   </div>
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">
-                    <Mail className="w-3 h-3" />
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground/80">
+                    <Mail className="w-3 h-3 text-primary/60" />
                     {personalInfo.email}
                   </div>
                 </motion.div>
@@ -151,13 +151,16 @@ export function Home() {
                 >
                   {/* WeChat - desktop only, first in row */}
                   <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }} transition={hoverTransition} className="hidden md:inline-flex">
-                    <button
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
                       onClick={() => setWechatOpen(true)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-green-500/10 border border-green-500/30 text-green-600 hover:bg-green-500/20 hover:border-green-500/50 transition-all duration-200 text-xs font-medium cursor-pointer"
+                      className="h-8 gap-1.5 text-xs text-foreground/80"
                     >
-                      <MessageCircle className="w-3.5 h-3.5" />
-                      <span>欢迎交流</span>
-                    </button>
+                      <MessageCircle className="w-3.5 h-3.5 text-primary/70" />
+                      欢迎交流
+                    </Button>
                   </motion.div>
                   {personalInfo.github && (
                     <motion.a
@@ -216,13 +219,16 @@ export function Home() {
                   className="mt-3 md:hidden"
                 >
                   <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }} transition={hoverTransition} className="inline-flex">
-                    <button
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
                       onClick={() => setWechatOpen(true)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-green-500/10 border border-green-500/30 text-green-600 hover:bg-green-500/20 hover:border-green-500/50 transition-all duration-200 text-xs font-medium cursor-pointer"
+                      className="h-8 gap-1.5 text-xs text-foreground/80"
                     >
-                      <MessageCircle className="w-3.5 h-3.5" />
-                      <span>欢迎交流</span>
-                    </button>
+                      <MessageCircle className="w-3.5 h-3.5 text-primary/70" />
+                      欢迎交流
+                    </Button>
                   </motion.div>
                 </motion.div>
               </div>
@@ -276,7 +282,7 @@ export function Home() {
         </AnimatePresence>
 
         {/* Skills Section */}
-        <section className="py-6 md:py-8 bg-muted/50">
+        <section className="border-t border-border/30 py-5 md:py-7">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <AnimatedSection className="flex items-center gap-3 mb-4 md:mb-5">
               <motion.div
@@ -321,7 +327,7 @@ export function Home() {
         </section>
 
         {/* Education Section */}
-        <section className="py-6 md:py-8">
+        <section className="border-t border-border/30 py-5 md:py-7">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <AnimatedSection className="flex items-center gap-3 mb-4 md:mb-5">
               <motion.div
@@ -373,7 +379,7 @@ export function Home() {
         </section>
 
         {/* Experience Section */}
-        <section className="py-6 md:py-8 bg-muted/50">
+        <section className="border-t border-border/30 py-5 md:py-7">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <AnimatedSection className="flex items-center gap-3 mb-4 md:mb-5">
               <motion.div
@@ -475,7 +481,7 @@ export function Home() {
         </section>
 
         {/* Projects Section */}
-        <section className="py-6 md:py-8">
+        <section className="border-t border-border/30 py-5 md:py-7">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <AnimatedSection className="flex items-center gap-3 mb-4 md:mb-5">
               <motion.div
@@ -593,7 +599,7 @@ export function Home() {
         </section>
 
         {/* Research Section - After Projects */}
-        <section className="py-6 md:py-8 bg-muted/50">
+        <section className="border-t border-border/30 py-5 md:py-7">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <AnimatedSection className="flex items-center gap-3 mb-4 md:mb-5">
               <motion.div
@@ -653,7 +659,7 @@ export function Home() {
         </section>
 
         {/* Awards Section */}
-        <section className="py-6 md:py-8">
+        <section className="border-t border-border/30 py-5 md:py-7">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <AnimatedSection className="flex items-center gap-3 mb-4 md:mb-5">
               <motion.div

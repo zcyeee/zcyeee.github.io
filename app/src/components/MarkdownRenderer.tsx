@@ -1,3 +1,4 @@
+import { isValidElement, type ReactNode } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -12,6 +13,19 @@ interface MarkdownRendererProps {
     content: string;
     className?: string;
 }
+
+const displayBlockLanguages = new Set(['', 'text', 'txt', 'plain', 'plaintext']);
+
+const getCodeBlockLanguage = (children: ReactNode) => {
+    const codeElement = Array.isArray(children)
+        ? children.find((child) => isValidElement<{ className?: string }>(child))
+        : children;
+
+    if (!isValidElement<{ className?: string }>(codeElement)) return '';
+
+    const match = codeElement.props.className?.match(/language-([\w-]+)/);
+    return match?.[1]?.toLowerCase() ?? '';
+};
 
 export function MarkdownRenderer({ content, className = '' }: MarkdownRendererProps) {
     return (
@@ -62,9 +76,22 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
                         );
                     },
                     // Code block wrapper
-                    pre: ({ children }) => (
-                        <pre className="mt-4 mb-4 rounded-lg overflow-x-auto text-xs sm:text-[13px] leading-relaxed shadow-sm">{children}</pre>
-                    ),
+                    pre: ({ children }) => {
+                        const language = getCodeBlockLanguage(children);
+                        const isDisplayBlock = displayBlockLanguages.has(language);
+                        const blockClasses = isDisplayBlock
+                            ? 'border-border/60 bg-muted/60 text-foreground shadow-sm dark:bg-muted/60 dark:text-foreground'
+                            : 'border-slate-800 bg-slate-950 text-slate-100 shadow-md shadow-black/10 dark:border-slate-700/70';
+
+                        return (
+                            <pre
+                                data-block-style={isDisplayBlock ? 'display' : 'code'}
+                                className={`mt-4 mb-4 rounded-lg border p-4 overflow-x-auto text-xs sm:text-[13px] leading-relaxed ${blockClasses}`}
+                            >
+                                {children}
+                            </pre>
+                        );
+                    },
                     // Blockquote
                     blockquote: ({ children }) => (
                         <blockquote className="border-l-4 border-primary/40 pl-4 my-4 text-muted-foreground italic">

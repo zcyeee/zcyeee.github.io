@@ -185,7 +185,7 @@ export function Blog() {
                         to={`/blog/${post.slug}${currentPage > 1 ? `?page=${currentPage}` : ''}`}
                         onClick={rememberScrollPosition}
                       >
-                        <Card className="group cursor-pointer hover:shadow-lg transition-all duration-300 border-transparent hover:border-primary/20 h-full">
+                        <Card className="group cursor-pointer border-border/40 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 h-full">
                           <CardContent className="p-5">
                             <div className="flex flex-col gap-2.5 h-full">
                               {/* Category & Date */}
@@ -324,7 +324,7 @@ export function Blog() {
               {featuredPost && (
                 <AnimatedSection delay={0.4}>
                   <motion.div whileHover={{ y: -4 }} transition={hoverTransition}>
-                    <Card className="group bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20 hover:shadow-lg transition-all duration-300">
+                    <Card className="group bg-gradient-to-br from-primary/10 via-card/90 to-accent/30 border-primary/20 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 dark:from-primary/10 dark:via-card/90 dark:to-accent/20">
                       <CardContent className="p-5 flex flex-col gap-3 h-full">
                         <div className="flex items-center justify-between">
                           <Badge className="w-fit">推荐阅读</Badge>

@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { Archive as ArchiveIcon, Calendar, Tag, ChevronRight, BarChart2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { AnimatedSection, ScaleOnHover } from '@/components/AnimatedSection';
 import { Link } from 'react-router-dom';
 import { buildArchiveData, buildCategoryStats, sortedPosts } from '@/content/posts-loader';
@@ -9,6 +10,12 @@ import { useIsMobile } from '@/hooks/use-mobile';
 
 const archiveData = buildArchiveData();
 const categoryStats = buildCategoryStats();
+const categoryTabletColumnClass =
+  categoryStats.length > 0 && categoryStats.length % 4 === 0
+    ? 'sm:grid-cols-4'
+    : categoryStats.length > 0 && categoryStats.length % 3 === 0
+      ? 'sm:grid-cols-3'
+      : 'sm:grid-cols-2';
 const INITIAL_POSTS = 20;
 const LOAD_MORE_POSTS = 20;
 const TOTAL_POSTS = sortedPosts.length;
@@ -155,7 +162,7 @@ export function Archive() {
                                   className="group"
                                 >
                                   <Link to={`/blog/${post.slug}?from=archive`} onClick={rememberScrollPosition}>
-                                    <Card className="cursor-pointer hover:shadow-md transition-all duration-300 border-transparent hover:border-primary/20">
+                                    <Card className="cursor-pointer border-border/40 hover:border-primary/30 hover:shadow-md hover:shadow-primary/10 transition-all duration-300">
                                       <CardContent className="p-3.5">
                                         <div className="flex items-center justify-between gap-3">
                                           <div className="flex-1 min-w-0">
@@ -165,7 +172,12 @@ export function Archive() {
                                             <div className="flex items-center gap-2 mt-1 text-[13px] md:text-xs text-muted-foreground">
                                               <span>{post.date}</span>
                                               <span>·</span>
-                                              <span className="text-primary/70 font-medium">{post.category}</span>
+                                              <Badge
+                                                variant="outline"
+                                                className="border-border/60 bg-muted/30 text-muted-foreground shadow-none"
+                                              >
+                                                {post.category}
+                                              </Badge>
                                             </div>
                                           </div>
                                           <ChevronRight className="w-4 h-4 text-muted-foreground/50 group-hover:text-primary group-hover:translate-x-0.5 transition-all duration-200 flex-shrink-0" />
@@ -200,7 +212,7 @@ export function Archive() {
               {/* Stats Card */}
               <AnimatedSection delay={0.2} className="hidden sm:block">
                 <ScaleOnHover scale={1.01}>
-                  <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+                  <Card className="bg-gradient-to-br from-primary/10 via-card/90 to-accent/30 border-primary/20 dark:from-primary/10 dark:via-card/90 dark:to-accent/20">
                     <CardContent className="p-5">
                       <h3 className="font-semibold mb-4 flex items-center gap-2">
                         <BarChart2 className="w-4 h-4 text-primary" />
@@ -232,7 +244,7 @@ export function Archive() {
                       <Tag className="w-4 h-4 text-primary" />
                       文章分类
                     </h3>
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-1 sm:gap-1.5">
+                    <div className={`grid grid-cols-2 gap-2 ${categoryTabletColumnClass} lg:grid-cols-1 lg:gap-1.5`}>
                       {categoryStats.map((cat, index) => (
                         <motion.div
                           key={cat.name}
@@ -240,10 +252,10 @@ export function Archive() {
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: (isMobile ? 0.15 : 0.3) + index * 0.05, duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
                           whileHover={{ x: 4, transition: hoverTransition }}
-                          className="flex items-center justify-between p-2 sm:p-2.5 rounded-lg hover:bg-muted transition-colors cursor-default"
+                          className="flex min-w-0 items-center justify-between p-2 sm:p-2.5 rounded-lg hover:bg-muted transition-colors cursor-default"
                         >
-                          <span className="text-sm font-medium">{cat.name}</span>
-                          <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full font-medium">
+                          <span className="min-w-0 truncate text-sm font-medium">{cat.name}</span>
+                          <span className="flex-shrink-0 text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full font-medium">
                             {cat.count}
                           </span>
                         </motion.div>
