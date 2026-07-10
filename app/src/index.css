@@ -127,6 +127,19 @@ pre code.hljs {
   padding: 0 !important;
 }
 
+/* Dark code blocks stay dark regardless of the page theme, so the theme-based
+   ::selection (near-black text in light mode) becomes unreadable on them.
+   Force a high-contrast, light selection scoped to these blocks. */
+pre[data-block-style="code"] ::selection {
+  background-color: hsl(217 91% 60% / 0.45);
+  color: #f8fafc;
+}
+
+pre[data-block-style="code"] ::-moz-selection {
+  background-color: hsl(217 91% 60% / 0.45);
+  color: #f8fafc;
+}
+
 /* Text/plaintext fences are used as display blocks, not syntax-highlighted code. */
 pre[data-block-style="display"] code.hljs {
   color: inherit !important;
