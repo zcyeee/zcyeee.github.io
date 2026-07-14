@@ -175,7 +175,12 @@ export function BlogPost() {
                                 <h2 className="text-lg sm:text-xl font-semibold mb-4">相关文章</h2>
                                 <div className="space-y-3">
                                     {relatedPosts.map((related) => (
-                                        <motion.div key={related.slug} whileHover={{ y: -4 }} transition={hoverTransition}>
+                                        <motion.div
+                                            key={related.slug}
+                                            whileHover={{ y: -4 }}
+                                            whileTap={{ scale: 0.985 }}
+                                            transition={hoverTransition}
+                                        >
                                             <Link to={`/blog/${related.slug}${relatedSuffix}`}>
                                                 <Card className="cursor-pointer border-border/40 hover:border-primary/30 hover:shadow-md hover:shadow-primary/10 transition-all duration-300">
                                                     <CardContent className="p-4 flex items-center justify-between">

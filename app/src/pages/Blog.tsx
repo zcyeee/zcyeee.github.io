@@ -180,7 +180,11 @@ export function Blog() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {paginatedPosts.map((post, index) => (
                   <AnimatedSection key={post.slug} delay={index * 0.05} amount={0} margin="50px">
-                    <motion.div whileHover={{ y: -4 }} transition={hoverTransition}>
+                    <motion.div
+                      whileHover={{ y: -4 }}
+                      whileTap={{ scale: 0.985 }}
+                      transition={hoverTransition}
+                    >
                       <Link
                         to={`/blog/${post.slug}${currentPage > 1 ? `?page=${currentPage}` : ''}`}
                         onClick={rememberScrollPosition}

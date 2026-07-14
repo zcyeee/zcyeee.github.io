@@ -158,6 +158,7 @@ export function Archive() {
                               <AnimatedSection key={post.slug} delay={postIndex * 0.05} amount={0} margin="50px">
                                 <motion.div
                                   whileHover={{ y: -2, x: 2 }}
+                                  whileTap={{ scale: 0.985 }}
                                   transition={hoverTransition}
                                   className="group"
                                 >

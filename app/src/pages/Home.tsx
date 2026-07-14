@@ -68,17 +68,13 @@ export function Home() {
                 transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
                 className="relative justify-self-center md:justify-self-start"
               >
-                <motion.div
-                  className="w-28 h-28 md:w-32 md:h-32 lg:w-40 lg:h-40 rounded-full overflow-hidden ring-4 ring-primary/20 shadow-2xl"
-                  whileHover={{ scale: 1.05, rotate: 2 }}
-                  transition={{ duration: 0.3 }}
-                >
+                <div className="w-28 h-28 md:w-32 md:h-32 lg:w-40 lg:h-40 rounded-full overflow-hidden ring-4 ring-primary/20 shadow-2xl">
                   <img
                     src={personalInfo.avatar}
                     alt={personalInfo.name}
                     className="w-full h-full object-cover"
                   />
-                </motion.div>
+                </div>
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
@@ -87,13 +83,6 @@ export function Home() {
                 >
                   <Sparkles className="w-4 h-4 lg:w-5 lg:h-5" />
                 </motion.div>
-
-                {/* Decorative ring */}
-                <motion.div
-                  className="absolute inset-0 rounded-full border-2 border-primary/20"
-                  animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.2, 0.5] }}
-                  transition={{ duration: 3, repeat: Infinity }}
-                />
               </motion.div>
 
               {/* Info */}
@@ -150,7 +139,7 @@ export function Home() {
                   className="flex flex-wrap items-center justify-center md:justify-start gap-2"
                 >
                   {/* WeChat - desktop only, first in row */}
-                  <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }} transition={hoverTransition} className="hidden md:inline-flex">
+                  <motion.div whileHover={{ scale: 1.05, y: -2 }} transition={hoverTransition} className="hidden md:inline-flex">
                     <Button
                       type="button"
                       variant="outline"
@@ -168,7 +157,6 @@ export function Home() {
                       target="_blank"
                       rel="noopener noreferrer"
                       whileHover={{ scale: 1.05, y: -2 }}
-                      whileTap={{ scale: 0.95 }}
                       transition={hoverTransition}
                     >
                       <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs">
@@ -183,7 +171,6 @@ export function Home() {
                       target="_blank"
                       rel="noopener noreferrer"
                       whileHover={{ scale: 1.05, y: -2 }}
-                      whileTap={{ scale: 0.95 }}
                       transition={hoverTransition}
                     >
                       <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs">
@@ -198,7 +185,6 @@ export function Home() {
                       target="_blank"
                       rel="noopener noreferrer"
                       whileHover={{ scale: 1.05, y: -2 }}
-                      whileTap={{ scale: 0.95 }}
                       transition={hoverTransition}
                     >
                       <Button variant="outline" size="sm" className="gap-1.5 h-8 text-xs">
@@ -218,7 +204,7 @@ export function Home() {
                   transition={{ duration: 0.6, delay: 0.7 }}
                   className="mt-3 md:hidden"
                 >
-                  <motion.div whileHover={{ scale: 1.05, y: -2 }} whileTap={{ scale: 0.95 }} transition={hoverTransition} className="inline-flex">
+                  <motion.div whileHover={{ scale: 1.05, y: -2 }} transition={hoverTransition} className="inline-flex">
                     <Button
                       type="button"
                       variant="outline"
@@ -544,7 +530,6 @@ export function Home() {
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     whileHover={{ scale: 1.1 }}
-                                    whileTap={{ scale: 0.9 }}
                                     transition={hoverTransition}
                                   >
                                     <Button variant="ghost" size="sm" className="gap-1 h-8 text-xs px-2.5">
@@ -559,7 +544,6 @@ export function Home() {
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     whileHover={{ scale: 1.1 }}
-                                    whileTap={{ scale: 0.9 }}
                                     transition={hoverTransition}
                                   >
                                     <Button variant="ghost" size="sm" className="gap-1 h-8 text-xs px-2.5">
