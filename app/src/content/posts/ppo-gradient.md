@@ -417,12 +417,17 @@ $$
 
 但这个轨迹级别的比值是很多步概率比值的连乘，轨迹稍长时方差会非常大。PPO 不直接使用完整轨迹比值，而是构造一个局部代理目标：**状态分布沿用旧策略采样得到的经验分布，只在动作分布上用新旧策略的单步概率比值做修正**。
 
-具体地，先考虑在旧策略访问到的状态上提升新策略的目标。对固定状态 $s_t$，新策略下的期望优势可以通过重要性采样改写到旧策略的动作分布上：
+## 2. 从梯度反推代理目标
+
+局部代理目标的具体形式并不靠直接构造目标函数得到，而是**先在梯度表达式上做采样修正，再把修正后的梯度写回成某个函数的导数（反推）**，那个函数就是要找的代理目标。
+
+本节开头的策略梯度，固定状态 $s_t$，只在动作维度上做重要性采样：
 
 $$
 \mathbb{E}_{a_t\sim\pi_\theta(\cdot|s_t)}
 \left[
 \hat A_t
+\nabla_\theta \log \pi_\theta(a_t|s_t)
 \right]
 =
 \mathbb{E}_{a_t\sim\pi_{\theta_{\text{old}}}(\cdot|s_t)}
@@ -430,10 +435,11 @@ $$
 \frac{\pi_\theta(a_t|s_t)}
 {\pi_{\theta_{\text{old}}}(a_t|s_t)}
 \hat A_t
+\nabla_\theta \log \pi_\theta(a_t|s_t)
 \right]
 $$
 
-于是定义单步概率比值：
+其中的权重就是符号约定里的单步概率比值：
 
 $$
 r_t(\theta)=
@@ -441,7 +447,60 @@ r_t(\theta)=
 {\pi_{\theta_{\text{old}}}(a_t|s_t)}
 $$
 
-再把状态按旧策略采样到的经验分布求平均，就得到 PPO 的未裁剪代理目标，通常记为 $J^{\text{PG}}(\theta)$，其中 PG 表示 policy gradient：
+这一步是精确的。接着把状态按旧策略采样到的经验分布求平均，得到修正后的梯度估计：
+
+$$
+\hat g(\theta)
+=
+\mathbb{E}_{t\sim\pi_{\theta_{\text{old}}}}
+\left[
+r_t(\theta)
+\hat A_t
+\nabla_\theta \log \pi_\theta(a_t|s_t)
+\right]
+$$
+
+这一步则是近似：真正的策略梯度要求状态也来自新策略的访问分布 $d_\theta$，这里直接用旧策略的 $d_{\theta_{\text{old}}}$ 代替。
+
+接下来反推 $\hat g(\theta)$ 是谁的梯度，即把它写成 $\nabla_\theta(\cdots)$ 的形式，才可以进行自动微分。关键在于 $r_t(\theta)\nabla_\theta\log\pi_\theta(a_t|s_t)$ 本身是一个完整的导数，且旧策略概率与 $\theta$ 无关，于是：
+
+$$
+r_t(\theta)
+\nabla_\theta \log \pi_\theta(a_t|s_t)
+=
+\frac{\pi_\theta(a_t|s_t)}
+{\pi_{\theta_{\text{old}}}(a_t|s_t)}
+\cdot
+\frac{\nabla_\theta \pi_\theta(a_t|s_t)}
+{\pi_\theta(a_t|s_t)}
+=
+\frac{\nabla_\theta \pi_\theta(a_t|s_t)}
+{\pi_{\theta_{\text{old}}}(a_t|s_t)}
+=
+\nabla_\theta r_t(\theta)
+$$
+
+代回原公式 $\hat g(\theta)$ 后，由于 $\hat A_t$ 与采样分布 $\pi_{\theta_{\text{old}}}$ 都不依赖 $\theta$，因此梯度算子可以提到期望外：
+
+$$
+\begin{aligned}
+\hat g(\theta)
+&=
+\mathbb{E}_{t\sim\pi_{\theta_{\text{old}}}}
+\left[
+\hat A_t
+\nabla_\theta r_t(\theta)
+\right] \\
+&=
+\nabla_\theta
+\mathbb{E}_{t\sim\pi_{\theta_{\text{old}}}}
+\left[
+r_t(\theta)\hat A_t
+\right]
+\end{aligned}
+$$
+
+此时可得到 PPO 的未裁剪**代理目标**，通常记为 $J^{\text{PG}}(\theta)$，其中 PG 表示 policy gradient：
 
 $$
 J^{\text{PG}}(\theta)
@@ -452,13 +511,32 @@ r_t(\theta)\hat A_t
 \right]
 $$
 
-这里的 $\hat A_t$ 由旧策略采样得到，在一轮 PPO 更新中视为常数。需要强调的是，$J^{\text{PG}}$ 并不是把普通 Actor-Critic 目标里的 $\log\pi_\theta(a_t|s_t)$ 做代数变形得到的——它是直接在概率比值上构造的目标，只是其梯度在 $\theta=\theta_{\text{old}}$ 处恰好退化为 Actor-Critic 策略梯度（见下一节）。
+> $J^{\text{PG}}$ 由梯度反推出来，而非先写目标再求导。代理目标里出现 $r_t(\theta)$ 而不是 $\log\pi_\theta(a_t|s_t)$，原因在于重要性采样权重 $r_t$ 和 log 梯度合并成了 $\nabla_\theta r_t$。
 
-同时其不是原始回报 $J(\theta)$ 的完全等价改写，而是在**旧策略附近的局部代理目标**：**当新旧策略差距较小时，它可以近似反映新策略相对旧策略的改进方向**。
+这里的 $\hat A_t$ 由旧策略采样得到，在一轮 PPO 更新中视为常数。需要强调两点：
 
-## 2. 未裁剪目标的梯度
+- $J^{\text{PG}}$ **不是**把普通 Actor-Critic 目标里的 $\log\pi_\theta(a_t|s_t)$ 做代数变形得到的。$\mathbb{E}_t[\hat A_t\log\pi_\theta]$ 与 $J^{\text{PG}}$ 都只是“求导之后能得到策略梯度”的替代目标，数值本身没有意义；两者的联系仅在于 $\theta=\theta_{\text{old}}$（此时 $r_t=1$）处梯度相同，见下一节。
+- $J^{\text{PG}}$ 也不是原始回报 $J(\theta)$ 的完全等价改写。上面的推导里有两处只在旧策略附近成立的近似：状态分布被冻结为 $d_{\theta_{\text{old}}}$，$\hat A_t$ 被冻结为旧策略下的估计。因此 $J^{\text{PG}}$ 是**旧策略附近的局部代理目标**：**当新旧策略差距较小时，它可以近似反映新策略相对旧策略的改进方向**；$r_t$ 一旦偏离 1 太多，近似就失效（**后续引入 clip 的原因**）。
 
-对 $J^{\text{PG}}(\theta)$ 求梯度：
+**补充：更严格的推导路线。** 从梯度反推的好处是直观，代价是只能保证 $\theta=\theta_{\text{old}}$ 一点上梯度正确，说不清代理目标本身的数值意味着什么。TRPO 与 PPO 原论文走的是另一条路：从性能差分引理（performance difference lemma，Kakade & Langford, 2002）出发，新旧策略的回报之差可以用**旧策略**的优势函数精确表示：
+
+$$
+J(\theta)-J(\theta_{\text{old}})
+=
+\sum_s
+d_\theta(s)
+\,
+\mathbb{E}_{a\sim\pi_\theta(\cdot|s)}
+\left[
+A^{\pi_{\theta_{\text{old}}}}(s,a)
+\right]
+$$
+
+其中 $d_\theta(s)=\sum_t\gamma^t P(s_t=s|\pi_\theta)$ 是新策略的折扣状态访问分布。这是恒等式；把 $d_\theta$ 近似为 $d_{\theta_{\text{old}}}$（也就是同样冻结状态分布），再对动作做重要性采样，得到的就是同一个 $J^{\text{PG}}$。这条路线的好处是能说明代理目标的数值本身对应策略改进量，并且能给出替换 $d_\theta$ 所引入的误差界，从而严格导出信任域约束。细节见 TRPO 论文第 2、3 节。
+
+## 3. 未裁剪目标的梯度
+
+反过来对 $J^{\text{PG}}(\theta)$ 求梯度，等于把上一节的推导倒着走一遍。$\hat A_t$ 视为常数，于是：
 
 $$
 \nabla_\theta J^{\text{PG}}(\theta)
@@ -470,36 +548,7 @@ $$
 \right]
 $$
 
-而
-
-$$
-r_t(\theta)
-=
-\frac{\pi_\theta(a_t|s_t)}
-{\pi_{\theta_{\text{old}}}(a_t|s_t)}
-$$
-
-旧策略概率与 $\theta$ 无关，因此：
-
-$$
-\begin{aligned}
-\nabla_\theta r_t(\theta)
-&=
-\frac{1}{\pi_{\theta_{\text{old}}}(a_t|s_t)}
-\nabla_\theta \pi_\theta(a_t|s_t) \\
-&=
-\frac{\pi_\theta(a_t|s_t)}
-{\pi_{\theta_{\text{old}}}(a_t|s_t)}
-\nabla_\theta \log \pi_\theta(a_t|s_t) \\
-&=
-r_t(\theta)
-\nabla_\theta \log \pi_\theta(a_t|s_t)
-\end{aligned}
-$$
-
-> $\nabla_\theta r_t(\theta)=r_t(\theta)\nabla_\theta\log\pi_\theta(a_t|s_t)$，将对 ratio 的求导转回到熟悉的 log probability 梯度。
-
-因此：
+再用上一节的恒等式 $\nabla_\theta r_t(\theta)=r_t(\theta)\nabla_\theta\log\pi_\theta(a_t|s_t)$，把对 ratio 的求导转回到熟悉的 log probability 梯度：
 
 $$
 \nabla_\theta J^{\text{PG}}(\theta)
@@ -900,4 +949,5 @@ $$
 - John Schulman, Filip Wolski, Prafulla Dhariwal, Alec Radford, Oleg Klimov. *Proximal Policy Optimization Algorithms*. arXiv:1707.06347, 2017. [https://arxiv.org/abs/1707.06347](https://arxiv.org/abs/1707.06347)
 - John Schulman, Philipp Moritz, Sergey Levine, Michael Jordan, Pieter Abbeel. *High-Dimensional Continuous Control Using Generalized Advantage Estimation*. arXiv:1506.02438, 2015. [https://arxiv.org/abs/1506.02438](https://arxiv.org/abs/1506.02438)
 - John Schulman, Sergey Levine, Philipp Moritz, Michael I. Jordan, Pieter Abbeel. *Trust Region Policy Optimization*. ICML 2015. [https://proceedings.mlr.press/v37/schulman15.html](https://proceedings.mlr.press/v37/schulman15.html)
+- Sham Kakade, John Langford. *Approximately Optimal Approximate Reinforcement Learning*. ICML 2002. [https://people.eecs.berkeley.edu/~pabbeel/cs287-fa09/readings/KakadeLangford-icml2002.pdf](https://people.eecs.berkeley.edu/~pabbeel/cs287-fa09/readings/KakadeLangford-icml2002.pdf)
 - 猛猿. 人人都能看懂的 RL-PPO 理论知识. 知乎专栏. [https://zhuanlan.zhihu.com/p/7461863937](https://zhuanlan.zhihu.com/p/7461863937)

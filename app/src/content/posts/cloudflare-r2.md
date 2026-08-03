@@ -3,7 +3,7 @@ title: "Cloudflare R2 搭建图床"
 date: "2026-05-28"
 tags: ["Cloudflare R2", "图床", "PicGo"]
 category: "工程知识"
-excerpt: "配置 Cloudflare R2 作为个人图床，最终可生成自定义域名格式的图片链接。相比 PicGo 手动上传，更推荐交给 AI 助手通过命令行自动化管理图片。"
+excerpt: "配置 Cloudflare R2 作为个人图床，同时可生成自定义域名格式的图片链接（推荐 AI 自动化管理图库）。"
 ---
 
 本文记录如何把 Cloudflare R2 配置成个人图床，并生成自定义域名格式的图片链接。日常上传/整理图片，更推荐交给 AI 助手（如 Cursor）用命令行自动化完成，而不是每次手动打开 PicGo；文中也保留了 PicGo 的配置方法，作为手动上传的备选方案。

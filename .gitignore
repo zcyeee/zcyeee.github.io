@@ -5,3 +5,4 @@ app/dist/
 app/node_modules/
 .env
 fig/
+.cursor/settings.json
