@@ -108,6 +108,15 @@
   min-width: max-content;
 }
 
+/* Inline diagram SVGs. `display: block` is required because SVG defaults to
+   inline, and auto margins don't center inline boxes. When the diagram's own
+   min-width exceeds the container, both auto margins resolve to 0, so the left
+   edge stays reachable inside a horizontally scrolling wrapper. */
+.prose svg[role="img"] {
+  display: block;
+  margin-inline: auto;
+}
+
 /* Code block styles */
 pre {
   @apply rounded-lg border border-border/60 p-4 shadow-sm overflow-x-auto text-xs sm:text-sm;

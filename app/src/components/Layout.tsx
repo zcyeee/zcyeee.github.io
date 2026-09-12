@@ -225,8 +225,13 @@ export function Layout({ children }: LayoutProps) {
       </div>
 
       {/* Navigation Bar */}
+      {/*
+        A dialog locks scrolling by hiding the body scrollbar and padding the body by its width.
+        This bar is fixed, so it misses that padding and would drift as the viewport widens —
+        react-remove-scroll exposes the removed width for exactly this compensation.
+      */}
       <header
-        className={`fixed top-0 left-0 right-0 z-50 ${isHydrated ? 'nav-slide-down' : ''}`}
+        className={`fixed top-0 left-0 right-0 z-50 pr-[var(--removed-body-scroll-bar-size,0px)] ${isHydrated ? 'nav-slide-down' : ''}`}
         onAnimationEnd={handleHeaderAnimationEnd}
       >
         <div className="mx-4 mt-4">
