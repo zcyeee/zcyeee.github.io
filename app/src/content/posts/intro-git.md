@@ -223,6 +223,78 @@ git rm --cached [file_path]
 
 将本地仓库关联到远程托管平台（如 GitHub、GitLab、Gitee 等），实现代码的共享和备份。
 
+先用一张图串起最常用的完整工作流。工作区、暂存区和本地仓库都位于本机；远程仓库是另一份可协作的仓库。`fetch` 只更新本地的远程跟踪分支，只有后续 `merge`、`rebase` 或 `pull` 才会影响当前分支。
+
+<div style="overflow-x:auto">
+<svg width="100%" style="max-width:920px;min-width:820px" viewBox="0 0 920 440" role="img">
+<title>Git 从工作区到远程仓库的全局工作流</title>
+<desc>日常提交流程依次经过工作区、暂存区、本地分支和远程仓库。git fetch 只把远程状态更新到 origin/main，之后可 merge 或 rebase 到本地分支；git pull 是这两步的组合。git clone 会创建本地仓库、暂存区和工作区。</desc>
+<defs>
+<marker id="intro-git-workflow-green-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+<path d="M0 0 L10 5 L0 10 Z" fill="#0F6E56"/>
+</marker>
+<marker id="intro-git-workflow-blue-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+<path d="M0 0 L10 5 L0 10 Z" fill="#185FA5"/>
+</marker>
+<marker id="intro-git-workflow-orange-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+<path d="M0 0 L10 5 L0 10 Z" fill="#BA7517"/>
+</marker>
+</defs>
+<text x="20" y="28" font-size="14" font-weight="600" fill="currentColor">日常提交与同步</text>
+<rect x="20" y="55" width="180" height="170" rx="12" fill="#F1EFE8" stroke="#888780" stroke-width="0.75"/>
+<text x="110" y="83" font-size="15" font-weight="600" text-anchor="middle" fill="#2C2C2A">工作区 · worktree</text>
+<text x="110" y="112" font-size="13" text-anchor="middle" fill="#5F5E5A">正在编辑的文件</text>
+<text x="110" y="136" font-size="13" text-anchor="middle" fill="#5F5E5A">包含未提交改动</text>
+<text x="110" y="198" font-size="12.5" text-anchor="middle" fill="#5F5E5A">git status 首先看到这里</text>
+<rect x="245" y="55" width="180" height="170" rx="12" fill="#FAEEDA" stroke="#BA7517" stroke-width="0.75"/>
+<text x="335" y="83" font-size="15" font-weight="600" text-anchor="middle" fill="#412402">暂存区 · index</text>
+<text x="335" y="112" font-size="13" text-anchor="middle" fill="#633806">下一次提交的快照</text>
+<text x="335" y="198" font-size="12.5" text-anchor="middle" fill="#633806">可反复 add 更新</text>
+<rect x="470" y="55" width="210" height="170" rx="12" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.75"/>
+<text x="575" y="81" font-size="15" font-weight="600" text-anchor="middle" fill="#04342C">本地仓库 · .git</text>
+<rect x="490" y="94" width="170" height="38" rx="8" fill="#9FE1CB" stroke="#0F6E56" stroke-width="0.5"/>
+<text x="575" y="113" font-size="13.5" font-weight="600" text-anchor="middle" dominant-baseline="central" fill="#04342C">本地分支 main</text>
+<rect x="490" y="166" width="170" height="38" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+<text x="575" y="185" font-size="13" font-weight="600" text-anchor="middle" dominant-baseline="central" fill="#0C447C">远程跟踪 origin/main</text>
+<path d="M575 166 V132" fill="none" stroke="#BA7517" stroke-width="1.8" marker-end="url(#intro-git-workflow-orange-arrow)"/>
+<text x="584" y="153" font-size="11.5" fill="#854F0B">merge / rebase</text>
+<rect x="735" y="55" width="165" height="170" rx="12" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.75"/>
+<text x="817.5" y="83" font-size="15" font-weight="600" text-anchor="middle" fill="#0C447C">远程仓库</text>
+<text x="817.5" y="108" font-size="13" text-anchor="middle" fill="#185FA5">origin</text>
+<rect x="757" y="133" width="121" height="38" rx="8" fill="#B5D4F4" stroke="#185FA5" stroke-width="0.5"/>
+<text x="817.5" y="152" font-size="13.5" font-weight="600" text-anchor="middle" dominant-baseline="central" fill="#0C447C">远程分支 main</text>
+<text x="817.5" y="198" font-size="12" text-anchor="middle" fill="#185FA5">GitHub / GitLab / Gitee</text>
+<path d="M200 113 H245" fill="none" stroke="#0F6E56" stroke-width="2" marker-end="url(#intro-git-workflow-green-arrow)"/>
+<text x="222.5" y="99" font-size="12.5" text-anchor="middle" fill="#0F6E56">add</text>
+<path d="M425 113 H490" fill="none" stroke="#0F6E56" stroke-width="2" marker-end="url(#intro-git-workflow-green-arrow)"/>
+<text x="457.5" y="99" font-size="12.5" text-anchor="middle" fill="#0F6E56">commit</text>
+<path d="M660 113 C700 113 719 142 757 142" fill="none" stroke="#185FA5" stroke-width="2" marker-end="url(#intro-git-workflow-blue-arrow)"/>
+<text x="710" y="99" font-size="12.5" text-anchor="middle" fill="#185FA5">push</text>
+<path d="M757 152 C720 152 704 185 662 185" fill="none" stroke="#185FA5" stroke-width="2" marker-end="url(#intro-git-workflow-blue-arrow)"/>
+<text x="710" y="205" font-size="12.5" text-anchor="middle" fill="#185FA5">fetch</text>
+<rect x="470" y="242" width="430" height="43" rx="9" fill="#FAEEDA" stroke="#BA7517" stroke-width="0.5"/>
+<text x="685" y="258" font-size="13.5" font-weight="600" text-anchor="middle" dominant-baseline="central" fill="#412402">git pull = git fetch + git merge / rebase</text>
+<text x="685" y="275" font-size="11.5" text-anchor="middle" dominant-baseline="central" fill="#633806">先更新 origin/*，再整合进当前本地分支</text>
+<text x="20" y="315" font-size="14" font-weight="600" fill="currentColor">首次获取远程项目</text>
+<rect x="20" y="330" width="570" height="65" rx="11" fill="#F1EFE8" stroke="#888780" stroke-width="0.75"/>
+<text x="305" y="352" font-size="13.5" font-weight="600" text-anchor="middle" fill="#2C2C2A">创建本地环境</text>
+<text x="305" y="377" font-size="12.5" text-anchor="middle" fill="#5F5E5A">本地仓库（含 origin/*）＋ 暂存区（与 HEAD 一致）＋ 已检出的工作区</text>
+<rect x="700" y="330" width="200" height="65" rx="11" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.75"/>
+<text x="800" y="353" font-size="13.5" font-weight="600" text-anchor="middle" fill="#0C447C">已有远程仓库</text>
+<text x="800" y="377" font-size="12.5" text-anchor="middle" fill="#185FA5">URL / SSH 地址</text>
+<path d="M700 362 H592" fill="none" stroke="#185FA5" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#intro-git-workflow-blue-arrow)"/>
+<text x="646" y="349" font-size="12.5" text-anchor="middle" fill="#185FA5">clone</text>
+<circle cx="25" cy="422" r="5" fill="#888780"/>
+<text x="37" y="426" font-size="12" fill="currentColor" opacity="0.72">工作状态</text>
+<circle cx="132" cy="422" r="5" fill="#BA7517"/>
+<text x="144" y="426" font-size="12" fill="currentColor" opacity="0.72">待提交快照</text>
+<circle cx="263" cy="422" r="5" fill="#0F6E56"/>
+<text x="275" y="426" font-size="12" fill="currentColor" opacity="0.72">本地版本历史</text>
+<circle cx="408" cy="422" r="5" fill="#185FA5"/>
+<text x="420" y="426" font-size="12" fill="currentColor" opacity="0.72">远程状态与同步</text>
+</svg>
+</div>
+
 ## 1. 准备工作：配置 SSH 密钥
 
 远程仓库通常需要 SSH 密钥验证，步骤如下：
@@ -304,6 +376,56 @@ git checkout main
 git merge feature/login
 ```
 
+在经典的非快进合并中，`feature` 从主干某个提交分出；两条线各自产生提交后，合并提交 `M` 同时连接两边的最新提交：
+
+<div style="overflow-x:auto">
+<svg width="100%" style="max-width:780px;min-width:700px" viewBox="0 0 780 292" role="img">
+<title>Git feature 分支合并回 main 的提交图</title>
+<desc>时间从左向右。main 从提交 B 分出 feature 分支；main 继续产生 C 和 D，feature 产生 F1 和 F2，最后两条提交线汇入 main 上具有两个父提交的合并提交 M。</desc>
+<defs>
+<marker id="intro-git-commit-main-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+<path d="M2 1L8 5L2 9" fill="none" stroke="#0F6E56" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+<marker id="intro-git-commit-feature-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+<path d="M2 1L8 5L2 9" fill="none" stroke="#BA7517" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+</defs>
+<text x="748" y="24" font-size="13.5" text-anchor="end" fill="currentColor" opacity="0.68">时间方向：从左到右 →</text>
+<rect x="24" y="52" width="76" height="28" rx="14" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.75"/>
+<text x="62" y="66" font-size="13.5" font-weight="600" text-anchor="middle" dominant-baseline="central" fill="#04342C">main</text>
+<rect x="24" y="236" width="88" height="28" rx="14" fill="#FAEEDA" stroke="#BA7517" stroke-width="0.75"/>
+<text x="68" y="250" font-size="13.5" font-weight="600" text-anchor="middle" dominant-baseline="central" fill="#412402">feature</text>
+<path d="M98 110 H160" fill="none" stroke="#0F6E56" stroke-width="2" marker-end="url(#intro-git-commit-main-arrow)"/>
+<path d="M198 110 H282" fill="none" stroke="#0F6E56" stroke-width="2" marker-end="url(#intro-git-commit-main-arrow)"/>
+<path d="M318 110 H432" fill="none" stroke="#0F6E56" stroke-width="2" marker-end="url(#intro-git-commit-main-arrow)"/>
+<path d="M468 110 H632" fill="none" stroke="#0F6E56" stroke-width="2" marker-end="url(#intro-git-commit-main-arrow)"/>
+<path d="M190 126 C214 170 246 210 282 210" fill="none" stroke="#BA7517" stroke-width="2" marker-end="url(#intro-git-commit-feature-arrow)"/>
+<path d="M318 210 H422" fill="none" stroke="#BA7517" stroke-width="2" marker-end="url(#intro-git-commit-feature-arrow)"/>
+<path d="M458 210 C528 210 560 110 632 110" fill="none" stroke="#BA7517" stroke-width="2" marker-end="url(#intro-git-commit-feature-arrow)"/>
+<circle cx="80" cy="110" r="18" fill="#E1F5EE" stroke="#0F6E56" stroke-width="1.25"/>
+<text x="80" y="110" font-size="13.5" font-weight="600" text-anchor="middle" dominant-baseline="central" fill="#04342C">A</text>
+<circle cx="180" cy="110" r="18" fill="#E1F5EE" stroke="#0F6E56" stroke-width="1.25"/>
+<text x="180" y="110" font-size="13.5" font-weight="600" text-anchor="middle" dominant-baseline="central" fill="#04342C">B</text>
+<circle cx="300" cy="110" r="18" fill="#E1F5EE" stroke="#0F6E56" stroke-width="1.25"/>
+<text x="300" y="110" font-size="13.5" font-weight="600" text-anchor="middle" dominant-baseline="central" fill="#04342C">C</text>
+<circle cx="450" cy="110" r="18" fill="#E1F5EE" stroke="#0F6E56" stroke-width="1.25"/>
+<text x="450" y="110" font-size="13.5" font-weight="600" text-anchor="middle" dominant-baseline="central" fill="#04342C">D</text>
+<circle cx="300" cy="210" r="18" fill="#FAEEDA" stroke="#BA7517" stroke-width="1.25"/>
+<text x="300" y="210" font-size="13.5" font-weight="600" text-anchor="middle" dominant-baseline="central" fill="#412402">F1</text>
+<circle cx="440" cy="210" r="18" fill="#FAEEDA" stroke="#BA7517" stroke-width="1.25"/>
+<text x="440" y="210" font-size="13.5" font-weight="600" text-anchor="middle" dominant-baseline="central" fill="#412402">F2</text>
+<circle cx="650" cy="110" r="20" fill="#E1F5EE" stroke="#0F6E56" stroke-width="2"/>
+<text x="650" y="110" font-size="14" font-weight="700" text-anchor="middle" dominant-baseline="central" fill="#04342C">M</text>
+<rect x="682" y="86" width="72" height="48" rx="8" fill="#F1EFE8" stroke="#888780" stroke-width="0.75"/>
+<text x="718" y="102" font-size="12.5" font-weight="600" text-anchor="middle" dominant-baseline="central" fill="#2C2C2A">merge</text>
+<text x="718" y="120" font-size="12" text-anchor="middle" dominant-baseline="central" fill="#5F5E5A">两个父提交</text>
+<text x="180" y="148" font-size="12.5" text-anchor="middle" fill="currentColor" opacity="0.65">从 B 分支</text>
+<text x="440" y="252" font-size="12.5" text-anchor="middle" fill="currentColor" opacity="0.65">feature/login 上的提交</text>
+</svg>
+</div>
+
+若 `main` 自分支点后没有新提交，默认 `git merge` 可能直接快进而不创建 `M`；需要保留显式合并节点时可使用 `git merge --no-ff feature/login`。
+
 ## 2. 强制同步远程代码
 
 当本地代码异常混乱且无需保留时，可强制将本地重置为与远程完全一致：
@@ -360,19 +482,22 @@ git commit --amend -m "feat: 更新更准确的提交说明"
 git reset HEAD main.py
 ```
 
-回退最近一次提交，代码保留在暂存区：
+将当前分支 / `HEAD` 移到上一个提交，暂存区和工作区保持命令执行前的内容：
 ```bash
 # HEAD~1 表示上一个版本
 git reset --soft HEAD~1
 ```
 
-回退最近一次提交，代码与提交都删除（危险）：
+将当前分支 / `HEAD` 移到上一个提交，并用目标提交重置暂存区和被跟踪的工作区文件（危险）：
 ```bash
 # 丢弃修改内容，完全回滚。谨慎使用
 git reset --hard HEAD~1
 ```
 
-## 6. 返回某次历史提交：git revert
+> [!WARNING]
+> `reset --hard` 会丢弃被跟踪文件中未提交的修改；为写入目标快照而挡路的未跟踪文件或目录也可能被删除。目标不一定是 `HEAD~1`，执行前应先用 `git status` 和 `git log --oneline` 确认当前状态与目标提交。
+
+## 6. 撤销已提交的修改：git revert
 
 如果提交已经推到远程，通常推荐 `revert` 而不是 `reset`，因为它不会改写历史，而是新增一个“反向提交”。
 
@@ -380,6 +505,8 @@ git reset --hard HEAD~1
 # 撤销指定提交（不会删除历史）
 git revert <commit_hash>
 ```
+
+`revert` 撤销的是指定提交引入的差异，而不是把整个目录切换到该提交的快照。协作分支通常优先使用 `revert`；`reset` 会移动分支位置，后续推送可能需要 `--force-with-lease`。
 
 ## 7. 批量整理历史提交：git rebase -i
 

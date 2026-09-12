@@ -12,43 +12,124 @@ RoPE（Rotary Position Embedding）不像绝对位置编码那样把位置向量
 
 ---
 
-# 一、基本概念
+# 一、绝对位置编码与旋转位置编码
 
-## 1. 从加法位置编码到旋转位置编码
-
-传统绝对位置编码通常写成：
+**绝对位置编码**先将位置向量加入输入，再进行线性投影。对于位置 $t$：
 
 $$
-\tilde{x}_i=x_i+p_i
+\tilde{x}_t=x_t+p_t,\qquad
+Q_t=W_Q\tilde{x}_t,\quad K_t=W_K\tilde{x}_t,\quad V_t=W_V\tilde{x}_t
 $$
 
-其中 $x_i$ 是第 $i$ 个 token 的内容向量，$p_i$ 是第 $i$ 个位置的位置向量。
+其中 $x_t$ 是 token 的内容向量，$p_t$ 是对应的位置向量，因此 $Q$、$K$、$V$ 三条路径都会直接携带位置编码。
 
-RoPE 不再把位置信息加到向量上，而是让位置信息旋转向量。对每个位置 $pos$，定义一个旋转变换矩阵 $R(\theta_{pos})$，并将该位置的 query 或 key 旋转对应角度。
-
-设：
-
-- $Q_i \in \mathbb{R}^d$：位置 $i$ 的 query 向量，尚未编码位置；
-- $K_j \in \mathbb{R}^d$：位置 $j$ 的 key 向量，尚未编码位置；
-- $d$：单个 attention head 的维度，通常要求为偶数，便于按二维分组。
-
-RoPE 旋转后得到：
+**RoPE** 改变了位置注入的顺序：先从内容向量完成线性投影，
 
 $$
-\tilde{Q}_i=R(\theta_i)Q_i,\qquad \tilde{K}_j=R(\theta_j)K_j
+Q_t=W_Qx_t,\qquad K_t=W_Kx_t,\qquad V_t=W_Vx_t
 $$
 
-然后**使用旋转后的 query 和 key 计算注意力分数**：
+再仅对 query 和 key 施加位置相关的旋转。记 $R_t=R(\theta_t)\in\mathbb{R}^{d\times d}$，其中 $d$ 是 query 和 key 的 head dimension，通常要求为偶数。对于位置 $i$ 的 query 和位置 $j$ 的 key：
+
+$$
+\tilde{Q}_i=R_iQ_i,\qquad \tilde{K}_j=R_jK_j
+$$
+
+旋转后的向量用于计算注意力分数：
 
 $$
 \text{score}(i,j)=\tilde{Q}_i^T\tilde{K}_j
 $$
 
-> **即位置不再以加法形式进入输入向量，而是以旋转形式进入注意力分数。**
+因此，位置信息通过旋转后的 $QK^T$ 进入注意力权重，而 $V$ 本身不执行旋转；不过最终输出仍会受到位置影响，因为这些权重决定了 $V$ 的加权组合。
 
-不同于绝对位置编码把 $p_i$ 加在投影之前，$Q,K,V$ 无差别地带上位置信息（详见 [绝对位置编码](/blog/absolute-encoding)）；RoPE 的旋转发生在投影之后，只旋转 $Q,K$、不旋转 $V$。
-
-因此注意力权重由 $QK^T$ 决定，**位置只需要影响权重，不会扭曲 $V$ 承载的内容信息，这也是 RoPE 相比绝对位置编码的优越性。**
+<div style="overflow-x:auto">
+<svg width="100%" style="max-width:920px;min-width:820px" viewBox="0 0 920 440" role="img">
+<title>绝对加法位置编码与 RoPE 的注入流程对比</title>
+<desc>上方流水线先把位置向量 pᵢ 加到内容向量 xᵢ，再投影为 Q、K、V，因此三路都受位置影响。下方流水线先把 xᵢ 投影为 Q、K、V，再按位置角度只旋转 Q 和 K，V 保持不变。</desc>
+<defs>
+<marker id="rope-pipeline-neutral-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+<path d="M2 1L8 5L2 9" fill="none" stroke="#888780" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+<marker id="rope-pipeline-position-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+<path d="M2 1L8 5L2 9" fill="none" stroke="#BA7517" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+<marker id="rope-pipeline-content-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+<path d="M2 1L8 5L2 9" fill="none" stroke="#0F6E56" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+</defs>
+<text x="28" y="27" font-size="16" font-weight="600" fill="currentColor">绝对加法位置编码 · 投影前注入</text>
+<text x="28" y="48" font-size="12.5" fill="currentColor" opacity="0.65">先形成 xᵢ + pᵢ，再送入 Q / K / V 三个投影</text>
+<rect x="30" y="88" width="90" height="40" rx="8" fill="currentColor" opacity="0.045"/>
+<text x="75" y="108" font-size="14" text-anchor="middle" dominant-baseline="central" fill="currentColor">内容 xᵢ</text>
+<rect x="30" y="144" width="90" height="40" rx="8" fill="#FAEEDA" stroke="#BA7517" stroke-width="0.75"/>
+<text x="75" y="164" font-size="14" text-anchor="middle" dominant-baseline="central" fill="#633806">位置 pᵢ</text>
+<path d="M120 108L148 115" fill="none" stroke="#888780" stroke-width="1.5" marker-end="url(#rope-pipeline-neutral-arrow)"/>
+<path d="M120 164L149 123" fill="none" stroke="#BA7517" stroke-width="1.75" marker-end="url(#rope-pipeline-position-arrow)"/>
+<circle cx="164" cy="118" r="18" fill="#FAEEDA" stroke="#BA7517" stroke-width="0.75"/>
+<text x="164" y="118" font-size="20" text-anchor="middle" dominant-baseline="central" fill="#633806">+</text>
+<path d="M182 118H204" fill="none" stroke="#BA7517" stroke-width="1.75" marker-end="url(#rope-pipeline-position-arrow)"/>
+<rect x="206" y="93" width="120" height="50" rx="9" fill="#FAEEDA" stroke="#BA7517" stroke-width="0.75"/>
+<text x="266" y="118" font-size="15" font-weight="600" text-anchor="middle" dominant-baseline="central" fill="#412402">xᵢ + pᵢ</text>
+<path d="M326 118H374" fill="none" stroke="#888780" stroke-width="1.5" marker-end="url(#rope-pipeline-neutral-arrow)"/>
+<text x="350" y="105" font-size="11.5" text-anchor="middle" fill="currentColor" opacity="0.62">再投影</text>
+<rect x="376" y="93" width="126" height="50" rx="9" fill="currentColor" opacity="0.045"/>
+<text x="439" y="111" font-size="13.5" text-anchor="middle" dominant-baseline="central" fill="currentColor">Q / K / V</text>
+<text x="439" y="130" font-size="12" text-anchor="middle" dominant-baseline="central" fill="currentColor" opacity="0.62">线性投影</text>
+<path d="M502 118H520V75H536" fill="none" stroke="#888780" stroke-width="1.5" marker-end="url(#rope-pipeline-neutral-arrow)"/>
+<path d="M502 118H536" fill="none" stroke="#888780" stroke-width="1.5" marker-end="url(#rope-pipeline-neutral-arrow)"/>
+<path d="M520 118V159H536" fill="none" stroke="#888780" stroke-width="1.5" marker-end="url(#rope-pipeline-neutral-arrow)"/>
+<rect x="538" y="58" width="88" height="34" rx="7" fill="currentColor" opacity="0.045"/>
+<rect x="538" y="101" width="88" height="34" rx="7" fill="currentColor" opacity="0.045"/>
+<rect x="538" y="142" width="88" height="34" rx="7" fill="currentColor" opacity="0.045"/>
+<text x="582" y="75" font-size="14" font-weight="600" text-anchor="middle" dominant-baseline="central" fill="currentColor">Qᵢ</text>
+<text x="582" y="118" font-size="14" font-weight="600" text-anchor="middle" dominant-baseline="central" fill="currentColor">Kᵢ</text>
+<text x="582" y="159" font-size="14" font-weight="600" text-anchor="middle" dominant-baseline="central" fill="currentColor">Vᵢ</text>
+<path d="M626 75H672" fill="none" stroke="#BA7517" stroke-width="1.75" marker-end="url(#rope-pipeline-position-arrow)"/>
+<path d="M626 118H672" fill="none" stroke="#BA7517" stroke-width="1.75" marker-end="url(#rope-pipeline-position-arrow)"/>
+<path d="M626 159H672" fill="none" stroke="#BA7517" stroke-width="1.75" marker-end="url(#rope-pipeline-position-arrow)"/>
+<rect x="674" y="58" width="180" height="34" rx="7" fill="#FAEEDA" stroke="#BA7517" stroke-width="0.75"/>
+<rect x="674" y="101" width="180" height="34" rx="7" fill="#FAEEDA" stroke="#BA7517" stroke-width="0.75"/>
+<rect x="674" y="142" width="180" height="34" rx="7" fill="#FAEEDA" stroke="#BA7517" stroke-width="0.75"/>
+<text x="764" y="75" font-size="12.5" text-anchor="middle" dominant-baseline="central" fill="#633806">Q 携带位置影响</text>
+<text x="764" y="118" font-size="12.5" text-anchor="middle" dominant-baseline="central" fill="#633806">K 携带位置影响</text>
+<text x="764" y="159" font-size="12.5" text-anchor="middle" dominant-baseline="central" fill="#633806">V 也携带位置影响</text>
+<line x1="28" y1="205" x2="892" y2="205" stroke="currentColor" stroke-width="1" opacity="0.12"/>
+<text x="28" y="234" font-size="16" font-weight="600" fill="currentColor">RoPE · 投影后仅旋转 Q / K</text>
+<text x="28" y="255" font-size="12.5" fill="currentColor" opacity="0.65">先从内容 xᵢ 得到 Q / K / V，再让位置 i 进入 Q / K 的旋转</text>
+<rect x="30" y="326" width="90" height="44" rx="8" fill="currentColor" opacity="0.045"/>
+<text x="75" y="348" font-size="14" text-anchor="middle" dominant-baseline="central" fill="currentColor">内容 xᵢ</text>
+<path d="M120 348H163" fill="none" stroke="#888780" stroke-width="1.5" marker-end="url(#rope-pipeline-neutral-arrow)"/>
+<rect x="165" y="323" width="126" height="50" rx="9" fill="currentColor" opacity="0.045"/>
+<text x="228" y="341" font-size="13.5" text-anchor="middle" dominant-baseline="central" fill="currentColor">Q / K / V</text>
+<text x="228" y="360" font-size="12" text-anchor="middle" dominant-baseline="central" fill="currentColor" opacity="0.62">先做线性投影</text>
+<path d="M291 348H318V304H346" fill="none" stroke="#888780" stroke-width="1.5" marker-end="url(#rope-pipeline-neutral-arrow)"/>
+<path d="M318 348V352H346" fill="none" stroke="#888780" stroke-width="1.5" marker-end="url(#rope-pipeline-neutral-arrow)"/>
+<path d="M318 348V400H346" fill="none" stroke="#888780" stroke-width="1.5" marker-end="url(#rope-pipeline-neutral-arrow)"/>
+<rect x="348" y="286" width="86" height="36" rx="7" fill="currentColor" opacity="0.045"/>
+<rect x="348" y="334" width="86" height="36" rx="7" fill="currentColor" opacity="0.045"/>
+<rect x="348" y="382" width="86" height="36" rx="7" fill="currentColor" opacity="0.045"/>
+<text x="391" y="304" font-size="14" font-weight="600" text-anchor="middle" dominant-baseline="central" fill="currentColor">Qᵢ</text>
+<text x="391" y="352" font-size="14" font-weight="600" text-anchor="middle" dominant-baseline="central" fill="currentColor">Kᵢ</text>
+<text x="391" y="400" font-size="14" font-weight="600" text-anchor="middle" dominant-baseline="central" fill="currentColor">Vᵢ</text>
+<path d="M434 304H485" fill="none" stroke="#BA7517" stroke-width="1.75" marker-end="url(#rope-pipeline-position-arrow)"/>
+<path d="M434 352H485" fill="none" stroke="#BA7517" stroke-width="1.75" marker-end="url(#rope-pipeline-position-arrow)"/>
+<rect x="487" y="286" width="118" height="36" rx="7" fill="#FAEEDA" stroke="#BA7517" stroke-width="0.75"/>
+<rect x="487" y="334" width="118" height="36" rx="7" fill="#FAEEDA" stroke="#BA7517" stroke-width="0.75"/>
+<text x="546" y="304" font-size="12.5" text-anchor="middle" dominant-baseline="central" fill="#633806">按 θᵢ 旋转 Q</text>
+<text x="546" y="352" font-size="12.5" text-anchor="middle" dominant-baseline="central" fill="#633806">按 θᵢ 旋转 K</text>
+<path d="M605 304H678" fill="none" stroke="#BA7517" stroke-width="1.75" marker-end="url(#rope-pipeline-position-arrow)"/>
+<path d="M605 352H678" fill="none" stroke="#BA7517" stroke-width="1.75" marker-end="url(#rope-pipeline-position-arrow)"/>
+<path d="M434 400H678" fill="none" stroke="#0F6E56" stroke-width="2" marker-end="url(#rope-pipeline-content-arrow)"/>
+<text x="556" y="390" font-size="11.5" text-anchor="middle" fill="#0F6E56">跳过旋转</text>
+<rect x="680" y="286" width="174" height="36" rx="7" fill="#FAEEDA" stroke="#BA7517" stroke-width="0.75"/>
+<rect x="680" y="334" width="174" height="36" rx="7" fill="#FAEEDA" stroke="#BA7517" stroke-width="0.75"/>
+<rect x="680" y="382" width="174" height="36" rx="7" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.75"/>
+<text x="767" y="304" font-size="12.5" text-anchor="middle" dominant-baseline="central" fill="#633806">Q̃ᵢ · 已旋转</text>
+<text x="767" y="352" font-size="12.5" text-anchor="middle" dominant-baseline="central" fill="#633806">K̃ᵢ · 已旋转</text>
+<text x="767" y="400" font-size="12.5" text-anchor="middle" dominant-baseline="central" fill="#085041">Vᵢ · 保持不变</text>
+</svg>
+</div>
 
 ---
 

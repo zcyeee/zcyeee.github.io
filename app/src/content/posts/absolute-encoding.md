@@ -52,11 +52,7 @@ $$
 \text{Attention}(PQ,PK,PV)=P\,\text{Attention}(Q,K,V)
 $$
 
-这说明 Self-Attention 对输入是**置换等变的**（Equivariant）：**输入顺序被置换，输出也只是按同样方式被置换。**
-
-也可以理解为：没有位置编码时，Self-Attention 处理的实际上是一个**集合（Set）**而非**序列（Sequence）**——只保留元素间的两两关系，不保留排列顺序。集合重新排列后本身不变，注意力算出的关系结构也只是随之同步置换，而非提供新的顺序信息。
-
-> 当没有位置编码时，Self-Attention 只能看到内容相似性，无法分析 token 的位置信息。
+这说明 Self-Attention 对输入是**置换等变的**（Equivariant）：输入顺序被置换，注意力矩阵的行列和输出也按同一置换移动。注意力权重仍可随 token 内容而不同；关键在于，没有位置编码时，置换输入只会同步置换内容关系和输出，模型无法从中识别排列顺序本身。
 
 ## 3. 位置注入
 
@@ -174,7 +170,118 @@ $$
 - **低维度 $i$ 较小，$\omega_i$ 较大，变化更快；**
 - **高维度 $i$ 较大，$\omega_i$ 较小，变化更慢。**
 
-相当于用多组不同频率的波形共同表示位置。短波负责区分局部位置，长波负责提供更大尺度的位置变化。
+将纵轴设为 token 位置、横轴设为维度组，可以同时观察所有频率随位置的变化。由于 $\omega_i$ 按指数规律衰减，横轴实际表示维度组 $i$，上方标出对应的频率方向：
+
+<div style="overflow-x:auto">
+<svg width="100%" style="max-width:760px;min-width:680px" viewBox="0 0 760 462" role="img">
+<title>Sinusoidal 位置编码的频率热力图</title>
+<desc>纵轴表示 token 位置 pos，横轴表示维度组 i，对应频率从左侧的高频逐渐降低到右侧的低频。颜色以正弦通道为例表示编码值，左侧随位置快速交替，右侧变化更慢。</desc>
+<defs>
+<marker id="absolute-frequency-axis-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+<path d="M2 1L8 5L2 9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+<linearGradient id="absolute-frequency-band-0" x1="0" y1="90" x2="0" y2="126" gradientUnits="userSpaceOnUse" spreadMethod="repeat">
+<stop offset="0" stop-color="#F1EFE8"/>
+<stop offset="0.25" stop-color="#1D9E75"/>
+<stop offset="0.5" stop-color="#F1EFE8"/>
+<stop offset="0.75" stop-color="#D85A30"/>
+<stop offset="1" stop-color="#F1EFE8"/>
+</linearGradient>
+<linearGradient id="absolute-frequency-band-1" x1="0" y1="90" x2="0" y2="138" gradientUnits="userSpaceOnUse" spreadMethod="repeat">
+<stop offset="0" stop-color="#F1EFE8"/>
+<stop offset="0.25" stop-color="#1D9E75"/>
+<stop offset="0.5" stop-color="#F1EFE8"/>
+<stop offset="0.75" stop-color="#D85A30"/>
+<stop offset="1" stop-color="#F1EFE8"/>
+</linearGradient>
+<linearGradient id="absolute-frequency-band-2" x1="0" y1="90" x2="0" y2="154" gradientUnits="userSpaceOnUse" spreadMethod="repeat">
+<stop offset="0" stop-color="#F1EFE8"/>
+<stop offset="0.25" stop-color="#1D9E75"/>
+<stop offset="0.5" stop-color="#F1EFE8"/>
+<stop offset="0.75" stop-color="#D85A30"/>
+<stop offset="1" stop-color="#F1EFE8"/>
+</linearGradient>
+<linearGradient id="absolute-frequency-band-3" x1="0" y1="90" x2="0" y2="178" gradientUnits="userSpaceOnUse" spreadMethod="repeat">
+<stop offset="0" stop-color="#F1EFE8"/>
+<stop offset="0.25" stop-color="#1D9E75"/>
+<stop offset="0.5" stop-color="#F1EFE8"/>
+<stop offset="0.75" stop-color="#D85A30"/>
+<stop offset="1" stop-color="#F1EFE8"/>
+</linearGradient>
+<linearGradient id="absolute-frequency-band-4" x1="0" y1="90" x2="0" y2="210" gradientUnits="userSpaceOnUse" spreadMethod="repeat">
+<stop offset="0" stop-color="#F1EFE8"/>
+<stop offset="0.25" stop-color="#1D9E75"/>
+<stop offset="0.5" stop-color="#F1EFE8"/>
+<stop offset="0.75" stop-color="#D85A30"/>
+<stop offset="1" stop-color="#F1EFE8"/>
+</linearGradient>
+<linearGradient id="absolute-frequency-band-5" x1="0" y1="90" x2="0" y2="254" gradientUnits="userSpaceOnUse" spreadMethod="repeat">
+<stop offset="0" stop-color="#F1EFE8"/>
+<stop offset="0.25" stop-color="#1D9E75"/>
+<stop offset="0.5" stop-color="#F1EFE8"/>
+<stop offset="0.75" stop-color="#D85A30"/>
+<stop offset="1" stop-color="#F1EFE8"/>
+</linearGradient>
+<linearGradient id="absolute-frequency-band-6" x1="0" y1="90" x2="0" y2="314" gradientUnits="userSpaceOnUse" spreadMethod="repeat">
+<stop offset="0" stop-color="#F1EFE8"/>
+<stop offset="0.25" stop-color="#1D9E75"/>
+<stop offset="0.5" stop-color="#F1EFE8"/>
+<stop offset="0.75" stop-color="#D85A30"/>
+<stop offset="1" stop-color="#F1EFE8"/>
+</linearGradient>
+<linearGradient id="absolute-frequency-band-7" x1="0" y1="90" x2="0" y2="410" gradientUnits="userSpaceOnUse" spreadMethod="repeat">
+<stop offset="0" stop-color="#F1EFE8"/>
+<stop offset="0.25" stop-color="#1D9E75"/>
+<stop offset="0.5" stop-color="#F1EFE8"/>
+<stop offset="0.75" stop-color="#D85A30"/>
+<stop offset="1" stop-color="#F1EFE8"/>
+</linearGradient>
+</defs>
+<g transform="translate(-24 0)">
+<text x="444" y="24" font-size="15.5" font-weight="600" text-anchor="middle" fill="currentColor">维度组 i（每组对应一对 sin / cos 通道）</text>
+<text x="184" y="52" font-size="13" font-weight="600" fill="#0F6E56">低维度 · 高频 ω 大</text>
+<text x="704" y="52" font-size="13" font-weight="600" text-anchor="end" fill="#D85A30">高维度 · 低频 ω 小</text>
+<line x1="184" y1="64" x2="704" y2="64" stroke="currentColor" stroke-width="1.5" marker-end="url(#absolute-frequency-axis-arrow)" opacity="0.65"/>
+<text x="444" y="82" font-size="12" text-anchor="middle" fill="currentColor" opacity="0.6">频率按指数规律降低，而非线性等间隔</text>
+<line x1="150" y1="90" x2="150" y2="370" stroke="currentColor" stroke-width="1.5" marker-end="url(#absolute-frequency-axis-arrow)" opacity="0.65"/>
+<text x="110" y="230" font-size="13" text-anchor="middle" fill="currentColor" transform="rotate(-90 110 230)">token 位置 pos 增大</text>
+<text x="136" y="95" font-size="12" text-anchor="end" fill="currentColor" opacity="0.65">0</text>
+<text x="136" y="165" font-size="12" text-anchor="end" fill="currentColor" opacity="0.65">8</text>
+<text x="136" y="235" font-size="12" text-anchor="end" fill="currentColor" opacity="0.65">16</text>
+<text x="136" y="305" font-size="12" text-anchor="end" fill="currentColor" opacity="0.65">24</text>
+<text x="136" y="375" font-size="12" text-anchor="end" fill="currentColor" opacity="0.65">32</text>
+<rect x="184" y="90" width="65" height="280" fill="url(#absolute-frequency-band-0)"/>
+<rect x="249" y="90" width="65" height="280" fill="url(#absolute-frequency-band-1)"/>
+<rect x="314" y="90" width="65" height="280" fill="url(#absolute-frequency-band-2)"/>
+<rect x="379" y="90" width="65" height="280" fill="url(#absolute-frequency-band-3)"/>
+<rect x="444" y="90" width="65" height="280" fill="url(#absolute-frequency-band-4)"/>
+<rect x="509" y="90" width="65" height="280" fill="url(#absolute-frequency-band-5)"/>
+<rect x="574" y="90" width="65" height="280" fill="url(#absolute-frequency-band-6)"/>
+<rect x="639" y="90" width="65" height="280" fill="url(#absolute-frequency-band-7)"/>
+<rect x="184" y="90" width="520" height="280" fill="none" stroke="currentColor" stroke-width="1" opacity="0.45"/>
+<path d="M249 90V370M314 90V370M379 90V370M444 90V370M509 90V370M574 90V370M639 90V370" fill="none" stroke="currentColor" stroke-width="0.75" opacity="0.25"/>
+<path d="M184 160H704M184 230H704M184 300H704" fill="none" stroke="currentColor" stroke-width="0.75" opacity="0.25"/>
+<text x="216.5" y="392" font-size="12" text-anchor="middle" fill="currentColor">i = 0</text>
+<text x="281.5" y="392" font-size="12" text-anchor="middle" fill="currentColor">1</text>
+<text x="346.5" y="392" font-size="12" text-anchor="middle" fill="currentColor">2</text>
+<text x="411.5" y="392" font-size="12" text-anchor="middle" fill="currentColor">3</text>
+<text x="476.5" y="392" font-size="12" text-anchor="middle" fill="currentColor">…</text>
+<text x="541.5" y="392" font-size="12" text-anchor="middle" fill="currentColor">…</text>
+<text x="606.5" y="392" font-size="12" text-anchor="middle" fill="currentColor">…</text>
+<text x="671.5" y="392" font-size="12" text-anchor="middle" fill="currentColor">d / 2 − 1</text>
+<text x="184" y="432" font-size="12.5" fill="currentColor" opacity="0.65">sin(pos · ωᵢ) 的值：</text>
+<rect x="315" y="417" width="28" height="18" rx="4" fill="#D85A30"/>
+<text x="352" y="431" font-size="12" fill="currentColor">−1</text>
+<rect x="388" y="417" width="28" height="18" rx="4" fill="#F1EFE8" stroke="currentColor" stroke-width="0.5" stroke-opacity="0.35"/>
+<text x="425" y="431" font-size="12" fill="currentColor">0</text>
+<rect x="454" y="417" width="28" height="18" rx="4" fill="#1D9E75"/>
+<text x="491" y="431" font-size="12" fill="currentColor">+1</text>
+<text x="704" y="454" font-size="12" text-anchor="end" fill="currentColor" opacity="0.6">cos 通道具有相同频率，仅相位错开 π / 2</text>
+</g>
+</svg>
+</div>
+
+左侧高频列随 token 位置快速交替，适合区分局部位置；右侧低频列变化缓慢，提供更大尺度的位置信号。
 
 ## 3. 实现
 

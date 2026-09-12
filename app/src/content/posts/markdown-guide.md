@@ -290,12 +290,113 @@ def attention(Q, K, V):
 
 ---
 
-# 十二、注意事项
+# 十二、内联 SVG 图表
+
+流程图、结构图可以把 SVG 直接写在正文里（渲染器启用了 `rehype-raw`，原始 HTML 会被放行）。相比外链图片，它矢量清晰、能跟随深浅色主题、也不额外发请求。
+
+```html
+<div style="overflow-x:auto">
+<svg width="100%" style="max-width:520px;min-width:460px" viewBox="0 0 520 92" role="img">
+<title>三段式推理流程</title>
+<desc>输入经过模型处理后产生输出。</desc>
+<defs>
+<marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+<path d="M2 1L8 5L2 9" fill="none" stroke="#888780" stroke-width="1.5" stroke-linecap="round"/>
+</marker>
+</defs>
+<rect x="54" y="12" width="100" height="44" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/>
+<text x="104" y="34" font-size="15" text-anchor="middle" dominant-baseline="central" fill="#26215C">输入</text>
+<path d="M158 34 L204 34" fill="none" stroke="#888780" stroke-width="1.5" marker-end="url(#ar)"/>
+<rect x="210" y="12" width="100" height="44" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+<text x="260" y="34" font-size="15" text-anchor="middle" dominant-baseline="central" fill="#042C53">模型</text>
+<path d="M314 34 L360 34" fill="none" stroke="#888780" stroke-width="1.5" marker-end="url(#ar)"/>
+<rect x="366" y="12" width="100" height="44" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<text x="416" y="34" font-size="15" text-anchor="middle" dominant-baseline="central" fill="#04342C">输出</text>
+<text x="54" y="80" font-size="13.5" fill="currentColor" opacity="0.65">说明文字用 currentColor，会跟随主题翻转</text>
+</svg>
+</div>
+```
+
+渲染效果如下：
+
+<div style="overflow-x:auto">
+<svg width="100%" style="max-width:520px;min-width:460px" viewBox="0 0 520 92" role="img">
+<title>三段式推理流程</title>
+<desc>输入经过模型处理后产生输出。</desc>
+<defs>
+<marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+<path d="M2 1L8 5L2 9" fill="none" stroke="#888780" stroke-width="1.5" stroke-linecap="round"/>
+</marker>
+</defs>
+<rect x="54" y="12" width="100" height="44" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/>
+<text x="104" y="34" font-size="15" text-anchor="middle" dominant-baseline="central" fill="#26215C">输入</text>
+<path d="M158 34 L204 34" fill="none" stroke="#888780" stroke-width="1.5" marker-end="url(#ar)"/>
+<rect x="210" y="12" width="100" height="44" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+<text x="260" y="34" font-size="15" text-anchor="middle" dominant-baseline="central" fill="#042C53">模型</text>
+<path d="M314 34 L360 34" fill="none" stroke="#888780" stroke-width="1.5" marker-end="url(#ar)"/>
+<rect x="366" y="12" width="100" height="44" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<text x="416" y="34" font-size="15" text-anchor="middle" dominant-baseline="central" fill="#04342C">输出</text>
+<text x="54" y="80" font-size="13.5" fill="currentColor" opacity="0.65">说明文字用 currentColor，会跟随主题翻转</text>
+</svg>
+</div>
+
+## 1. 整段 SVG 不能有空行
+
+这是最容易踩的一条，而且规则和上一节的 `<details>` **正好相反**：`<details>` 需要与内容空一行，SVG 内部则一个空行都不能有。
+
+原因在 CommonMark 的分块规则里：`svg` 不属于 block-level 标签白名单，所以 `<svg>` 只能触发 type-7 HTML 块，而这种块**遇到第一个空行就终止**。后面的内容会被重新按 Markdown 解析、包进 `<p>`，而 HTML 解析器不允许 `<svg>` 里出现 `<p>`，于是那些图形元素被整体踢出 SVG。
+
+结果是图只剩一个空框，所有内容退化成竖排文本。想分组请用缩进或注释，不要用空行。
+
+## 2. 字号会被 viewBox 缩放
+
+`font-size` 的单位是 viewBox 坐标，不是像素。实际字号 = 声明值 × (渲染宽度 ÷ viewBox 宽度)。
+
+如果只写 `width="100%"`，正文栏 910px 配 680 单位的 viewBox 会把所有字放大 1.34 倍；手机上又会缩到 0.52 倍。所以推荐固定套用上面例子里的写法：
+
+```text
+外层 <div style="overflow-x:auto">      窄屏转为横向滚动
+内层 style="max-width:{viewBox 宽度}"   缩放系数上限锁定为 1，声明值 = 实际像素
+     style="min-width:{可读下限}"       防止窄屏缩到看不清
+```
+
+`max-width` 取和 viewBox 宽度相同的值，字号就所见即所得。
+
+## 3. 裸文字和线条用 currentColor
+
+站点有深色模式，背景会从近白切到近黑。画在背景上的文字若写死深色（如 `fill="#2C2C2A"`），深色模式下对比度只有 1.2:1，基本看不见。
+
+- 背景上的文字、分隔线：用 `fill="currentColor"` / `stroke="currentColor"`，它会继承正文颜色并跟随主题翻转，弱化就配 `opacity`
+- 色块内部的文字：可以写死颜色，因为它落在自己的浅色底上，两种主题下都清晰
+
+## 4. 无障碍与居中
+
+加上 `role="img"` 并配 `<title>`、`<desc>`：
+
+- `role="img"` 让读屏软件把整张图当一个图片，否则图里每个 `<text>` 会被当成互不相干的文本碎片逐个念出来
+- `<title>` 作为图片名，桌面端鼠标悬停时还会显示为 tooltip
+- `<desc>` 作为详细描述
+
+居中不用管，`index.css` 里已有 `.prose svg[role="img"]` 规则自动处理。
+
+## 5. 几个不能用的写法
+
+| 写法 | 问题 |
+|---|---|
+| `class="xxx"` 配 CSS | 正文里的 class 没有对应样式，Tailwind 的 content 配置也不扫 `.md`，须改用内联 `style` 或原生属性 |
+| `stroke="context-stroke"` | Safari 与 iOS Safari 不支持，箭头会整个消失，请写死颜色 |
+| `text-align:center` 居中 | 在 `overflow-x:auto` 容器里内容溢出时，左侧会被裁掉且滚不回去 |
+| 写死 `height="..."` | 有 viewBox 时不写 `height`，高宽比才会自动保持；写死会在窄屏把图压扁 |
+
+---
+
+# 十三、注意事项
 
 1. **随意使用 `#` 标题**：不用再避开一次标题啦！由于渲染层会自动适配级联下调（将 `#` 转为 `<h2>`，`##` 转为 `<h3>` 等），请放心从 `#` 起步写作。
 2. **数学公式**：行内用 `$...$`，块级用 `$$...$$`，注意美元符号不要有多余空格
 3. **代码块语言标识**：真实代码请写准确语言名（`python`、`typescript`、`bash` 等）以启用黑底高亮；展示流程、配置、URL 等普通文本时请用 `text` / `plaintext`
 4. **图片**：推荐使用外链 CDN，`alt` 会作为图注展示
+5. **内联 SVG**：整段不能出现空行；`font-size` 会被 viewBox 缩放，用 `max-width` 锁定；画在背景上的文字用 `currentColor` 以适配深色模式
 
 ---
 

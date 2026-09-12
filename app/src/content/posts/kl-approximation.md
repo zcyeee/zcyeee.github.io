@@ -250,7 +250,7 @@ $$
 \boxed{\nabla_\theta k_2(x) = -\log r(x)\cdot\nabla_\theta\log\pi_\theta(x)}
 $$
 
-梯度权重为 $-\log r$：当策略偏离越大（$|\log r|$ 越大），梯度信号越强；当 $r\approx1$ 时梯度趋于零，**对已对齐的 token 自动施加近似为零的惩罚**。小偏移区间下 $-\log r\approx r-1$，与 k3 权重一致。
+梯度权重为 $-\log r$：当策略偏离越大（$|\log r|$ 越大），梯度信号越强；当 $r\approx1$ 时梯度趋于零，**对已对齐的 token 自动施加近似为零的惩罚**。小偏移区间下 $-\log r\approx 1-r$，与 k3 权重一致。
 
 ---
 
@@ -287,13 +287,102 @@ $$
 
 ---
 
-## A.4　梯度权重对比
+## A.4　单样本值与梯度权重对比
+
+令 $x=\log r$。左图比较三个估计器如何把同一偏移转成单样本值，右图比较这些值对当前策略 logprob 产生的梯度权重。
+
+<div style="display:flex;gap:16px;overflow-x:auto;align-items:flex-start">
+<svg width="620" style="flex:0 0 620px;max-width:620px;min-width:620px;margin-inline:0" viewBox="0 0 680 352" role="img">
+<title>k1、k2、k3 单样本估计值随 log r 的变化</title>
+<desc>横轴为 x 等于 log r。k1 等于负 x，可取负值；k2 等于 x 的平方除以二，关于零对称且非负；k3 等于 e 的 x 次方减一再减 x，非负且在 x 大于零时增长更快。竖直虚线标出 x 等于零。</desc>
+<defs>
+<marker id="kl-estimator-axis-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+<path d="M2 1L8 5L2 9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+</defs>
+<text x="340" y="24" font-size="16" font-weight="600" text-anchor="middle" fill="currentColor">三种估计量的单样本形状</text>
+<line x1="112" y1="48" x2="138" y2="48" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" opacity="0.72"/>
+<text x="146" y="52" font-size="13" fill="currentColor">k1 = −x</text>
+<line x1="264" y1="48" x2="290" y2="48" stroke="#0F6E56" stroke-width="2.5" stroke-linecap="round"/>
+<text x="298" y="52" font-size="13" fill="#0F6E56">k2 = x² / 2</text>
+<line x1="434" y1="48" x2="460" y2="48" stroke="#D85A30" stroke-width="2.5" stroke-linecap="round"/>
+<text x="468" y="52" font-size="13" fill="#D85A30">k3 = eˣ − 1 − x</text>
+<text x="46" y="78" font-size="12.5" text-anchor="middle" fill="currentColor" opacity="0.65">估计值</text>
+<line x1="70" y1="89.6" x2="620" y2="89.6" stroke="currentColor" stroke-width="0.5" opacity="0.1"/>
+<line x1="70" y1="154.9" x2="620" y2="154.9" stroke="currentColor" stroke-width="0.5" opacity="0.1"/>
+<line x1="70" y1="220.2" x2="626" y2="220.2" stroke="currentColor" stroke-width="1" opacity="0.45" marker-end="url(#kl-estimator-axis-arrow)"/>
+<line x1="70" y1="285.5" x2="620" y2="285.5" stroke="currentColor" stroke-width="0.5" opacity="0.1"/>
+<text x="58" y="93.6" font-size="12" text-anchor="end" fill="currentColor" opacity="0.58">4</text>
+<text x="58" y="158.9" font-size="12" text-anchor="end" fill="currentColor" opacity="0.58">2</text>
+<text x="58" y="224.2" font-size="12" text-anchor="end" fill="currentColor" opacity="0.58">0</text>
+<text x="58" y="289.5" font-size="12" text-anchor="end" fill="currentColor" opacity="0.58">−2</text>
+<line x1="345" y1="69" x2="345" y2="292" stroke="#0F6E56" stroke-width="1.25" stroke-dasharray="4 4" opacity="0.65"/>
+<line x1="70" y1="216.2" x2="70" y2="224.2" stroke="currentColor" stroke-width="0.8" opacity="0.5"/>
+<line x1="207.5" y1="216.2" x2="207.5" y2="224.2" stroke="currentColor" stroke-width="0.8" opacity="0.5"/>
+<line x1="345" y1="216.2" x2="345" y2="224.2" stroke="#0F6E56" stroke-width="1.2"/>
+<line x1="482.5" y1="216.2" x2="482.5" y2="224.2" stroke="currentColor" stroke-width="0.8" opacity="0.5"/>
+<line x1="620" y1="216.2" x2="620" y2="224.2" stroke="currentColor" stroke-width="0.8" opacity="0.5"/>
+<text x="70" y="240" font-size="12" text-anchor="middle" fill="currentColor" opacity="0.62">−2</text>
+<text x="207.5" y="240" font-size="12" text-anchor="middle" fill="currentColor" opacity="0.62">−1</text>
+<text x="345" y="240" font-size="12" font-weight="600" text-anchor="middle" fill="#0F6E56">0</text>
+<text x="482.5" y="240" font-size="12" text-anchor="middle" fill="currentColor" opacity="0.62">1</text>
+<text x="620" y="240" font-size="12" text-anchor="middle" fill="currentColor" opacity="0.62">2</text>
+<path d="M70 154.9L620 285.5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" opacity="0.72"/>
+<path d="M70 154.9Q345 285.5 620 154.9" fill="none" stroke="#0F6E56" stroke-width="2.75" stroke-linecap="round"/>
+<path d="M70 183.1L104.4 190L138.8 196.6L173.1 202.7L207.5 208.2L241.9 212.9L276.3 216.7L310.6 219.2L345 220.2L379.4 219.1L413.8 215.3L448.1 208.2L482.5 196.7L516.9 179.7L551.3 155.5L585.6 122.1L620 76.9" fill="none" stroke="#D85A30" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="450" y="72" width="140" height="25" rx="12.5" fill="#FAECE7"/>
+<text x="520" y="84.5" font-size="12" text-anchor="middle" dominant-baseline="central" fill="#993C1D">x &gt; 0 时增长更快</text>
+<text x="545" y="276" font-size="12.5" text-anchor="middle" fill="currentColor" opacity="0.7">k1 可为负</text>
+<text x="340" y="316" font-size="13" font-weight="600" text-anchor="middle" fill="currentColor">x = log r</text>
+<text x="152" y="340" font-size="12.5" text-anchor="middle" fill="currentColor" opacity="0.65">x &lt; 0 ⇔ r &lt; 1</text>
+<text x="528" y="340" font-size="12.5" text-anchor="middle" fill="currentColor" opacity="0.65">x &gt; 0 ⇔ r &gt; 1</text>
+</svg>
+<svg width="620" style="flex:0 0 620px;max-width:620px;min-width:620px;margin-inline:0" viewBox="0 0 680 352" role="img">
+<title>k1、k2、k3 梯度权重随 log r 的变化</title>
+<desc>横轴为 log r，纵轴为梯度权重。k1 恒为一；k2 等于负 log r，随横轴线性减小；k3 等于一减 r，左侧趋近上界一，右侧比 k2 更快趋向负无穷。三条曲线在 r 等于一附近的关系被突出显示。</desc>
+<defs>
+<marker id="kl-gradient-axis-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+<path d="M2 1L8 5L2 9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+</defs>
+<text x="340" y="24" font-size="16" font-weight="600" text-anchor="middle" fill="currentColor">梯度权重的大小与方向</text>
+<line x1="48" y1="49" x2="72" y2="49" stroke="currentColor" stroke-width="2.25" stroke-dasharray="5 4" opacity="0.72"/>
+<text x="80" y="53" font-size="12.5" fill="currentColor">k1 = 1　{1}</text>
+<line x1="210" y1="49" x2="234" y2="49" stroke="#0F6E56" stroke-width="2.5"/>
+<text x="242" y="53" font-size="12.5" fill="#0F6E56">k2 = −log r　(−∞, +∞)</text>
+<line x1="456" y1="49" x2="480" y2="49" stroke="#D85A30" stroke-width="2.5"/>
+<text x="488" y="53" font-size="12.5" fill="#D85A30">k3 = 1 − r　(−∞, 1)</text>
+<text x="46" y="78" font-size="12.5" text-anchor="middle" fill="currentColor" opacity="0.65">权重</text>
+<line x1="70" y1="84.8" x2="620" y2="84.8" stroke="currentColor" stroke-width="0.5" opacity="0.1"/>
+<line x1="70" y1="109.1" x2="620" y2="109.1" stroke="currentColor" stroke-width="0.5" opacity="0.13"/>
+<line x1="70" y1="133.5" x2="626" y2="133.5" stroke="currentColor" stroke-width="1" opacity="0.45" marker-end="url(#kl-gradient-axis-arrow)"/>
+<line x1="70" y1="182.3" x2="620" y2="182.3" stroke="currentColor" stroke-width="0.5" opacity="0.1"/>
+<line x1="70" y1="231" x2="620" y2="231" stroke="currentColor" stroke-width="0.5" opacity="0.1"/>
+<line x1="70" y1="279.8" x2="620" y2="279.8" stroke="currentColor" stroke-width="0.5" opacity="0.1"/>
+<text x="58" y="88.8" font-size="12" text-anchor="end" fill="currentColor" opacity="0.58">2</text>
+<text x="58" y="113.1" font-size="12" text-anchor="end" fill="currentColor" opacity="0.58">1</text>
+<text x="58" y="137.5" font-size="12" text-anchor="end" fill="currentColor" opacity="0.58">0</text>
+<text x="58" y="186.3" font-size="12" text-anchor="end" fill="currentColor" opacity="0.58">−2</text>
+<text x="58" y="235" font-size="12" text-anchor="end" fill="currentColor" opacity="0.58">−4</text>
+<text x="58" y="283.8" font-size="12" text-anchor="end" fill="currentColor" opacity="0.58">−6</text>
+<line x1="345" y1="70" x2="345" y2="294" stroke="currentColor" stroke-width="1" stroke-dasharray="4 4" opacity="0.3"/>
+<path d="M70 109.1H620" fill="none" stroke="currentColor" stroke-width="2.25" stroke-dasharray="5 4" stroke-linecap="round" opacity="0.72"/>
+<path d="M70 84.8L620 182.3" fill="none" stroke="#0F6E56" stroke-width="2.75" stroke-linecap="round"/>
+<path d="M70 112.4L104.4 113.4L138.8 114.6L173.1 116.1L207.5 118.1L241.9 120.6L276.3 123.9L310.6 128.1L345 133.5L379.4 140.4L413.8 149.3L448.1 160.7L482.5 175.4L516.9 194.2L551.3 218.4L585.6 249.4L620 289.3" fill="none" stroke="#D85A30" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="345" cy="133.5" r="4" fill="#F1EFE8" stroke="currentColor" stroke-width="1.25"/>
+<text x="345" y="153" font-size="12" font-weight="600" text-anchor="middle" fill="currentColor">r = 1</text>
+<text x="521" y="271" font-size="12.5" text-anchor="middle" fill="#D85A30">k3 更快趋向 −∞</text>
+<text x="340" y="316" font-size="13" font-weight="600" text-anchor="middle" fill="currentColor">log r　（向右表示 r 增大）</text>
+<text x="160" y="340" font-size="12.5" text-anchor="middle" fill="#0F6E56">r &lt; 1：k2、k3 &gt; 0</text>
+<text x="520" y="340" font-size="12.5" text-anchor="middle" fill="#D85A30">r &gt; 1：k2、k3 &lt; 0</text>
+</svg>
+</div>
 
 | 估计器 | 梯度权重 $\partial k_i/\partial \log q$ | 权重范围 | 大偏移时行为 |
 |---|---|---|---|
 | k1 | $1$ | $\{1\}$ | 恒定，不随偏离变化 |
-| k2 | $-\log r$ | $(-\infty, +\infty)$ | 随 $\|\log r\|$ 线性增大 |
+| k2 | $-\log r$ | $(-\infty, +\infty)$ | 随 $\log r$ 增大而线性减小 |
 | k3 | $1 - r$ | $(-\infty, 1)$ | 随 $r$ 增大而趋向 $-\infty$，上界有限 |
 
-k2 和 k3 均在 $r\approx1$ 时梯度趋近于零，具有自适应调节强度的效果；但当 $r\gg1$ 时，k2 的权重 $-\log r$ 增长较温和（对数级），而 k3 的权重 $1-r$ 则线性趋向负无穷，**可能在策略剧烈偏移时产生过大梯度**，需配合裁剪使用。
+k2 和 k3 均在 $r\approx1$ 时梯度趋近于零；当 $r\gg1$ 时，k3 可能产生过大梯度，需配合裁剪使用。
 

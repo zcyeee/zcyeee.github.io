@@ -57,9 +57,9 @@ $$
 
 ## 1. 单个频率维度的周期重复
 
-对于较大的 $\theta_i$，相位随位置增长很快；当 $m$ 很大时，$m\theta_i$ 会经历很多轮周期旋转。由于三角函数具有周期性，单个维度只能观察模 $2\pi$ 后的相位，因此不同远距离位置可能在该维度上出现相同或相近的相位。
+单个维度只能观察 $m\theta_i$ 模 $2\pi$ 后的相位。对于较大的 $\theta_i$，位置增大时相位会快速绕过多轮，因此训练内位置与训练外位置可能落在单位圆上相同或相近的位置。
 
-尽管 **RoPE 使用多组不同频率联合表示位置，单个维度的周期重复不等于整体位置编码必然碰撞**，但模型需要处理训练阶段从未见过的多频率相位组合。
+这里只讨论单个频率维度的周期性；**RoPE 使用多组不同频率联合表示位置，所以这不等于整体位置编码必然碰撞**。真正的困难是模型还要处理训练阶段从未见过的多频率相位组合。
 
 ## 2. 相对距离超出训练分布
 
@@ -86,7 +86,42 @@ $$
 =m\left(\frac{\theta_i}{s}\right)
 $$
 
-也就是把位置 $m$ 映射为 $m/s$；从频率角度看，则等价于令 $\theta_i'=\theta_i/s$。这样当 $m$ 增长到 $L_{\text{test}}$ 时，实际相位范围仍大致落在训练时见过的范围内。
+<div style="overflow-x:auto">
+<svg width="100%" style="max-width:760px;min-width:680px" viewBox="0 0 760 300" role="img">
+<title>Position Interpolation 将测试位置压回训练范围</title>
+<desc>上方较长数轴表示零到测试长度的位置范围，下方较短数轴表示零到训练长度的位置范围；位置 m 经除以缩放因子 s 映射为 m 除以 s，测试终点也映射到训练终点。</desc>
+<defs>
+<marker id="length-pi-map-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+<path d="M2 1L8 5L2 9" fill="none" stroke="#888780" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+</defs>
+<text x="380" y="25" font-size="15" font-weight="600" text-anchor="middle" fill="currentColor">Position Interpolation：长范围压回训练区间</text>
+<text x="60" y="54" font-size="13" fill="#993C1D">测试坐标（更长）</text>
+<line x1="60" y1="76" x2="700" y2="76" stroke="#D85A30" stroke-width="3" stroke-linecap="round"/>
+<line x1="60" y1="68" x2="60" y2="84" stroke="#D85A30" stroke-width="2"/>
+<line x1="500" y1="68" x2="500" y2="84" stroke="#D85A30" stroke-width="2"/>
+<line x1="700" y1="68" x2="700" y2="84" stroke="#D85A30" stroke-width="2"/>
+<text x="60" y="103" font-size="13" text-anchor="middle" fill="currentColor">0</text>
+<text x="500" y="61" font-size="13" font-weight="600" text-anchor="middle" fill="#D85A30">m</text>
+<text x="700" y="103" font-size="13" text-anchor="middle" fill="#993C1D">L_test</text>
+<path d="M60 88 C60 128 200 151 200 202" fill="none" stroke="#888780" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#length-pi-map-arrow)"/>
+<path d="M500 88 C500 130 448 157 448 202" fill="none" stroke="#888780" stroke-width="1.75" marker-end="url(#length-pi-map-arrow)"/>
+<path d="M700 88 C700 128 560 151 560 202" fill="none" stroke="#888780" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#length-pi-map-arrow)"/>
+<rect x="300" y="124" width="160" height="36" rx="18" fill="#FAEEDA" stroke="#BA7517" stroke-width="0.75"/>
+<text x="380" y="142" font-size="14" font-weight="600" text-anchor="middle" dominant-baseline="central" fill="#854F0B">m → m / s</text>
+<text x="200" y="199" font-size="13" fill="#0F6E56">训练坐标</text>
+<line x1="200" y1="216" x2="560" y2="216" stroke="#0F6E56" stroke-width="3" stroke-linecap="round"/>
+<line x1="200" y1="208" x2="200" y2="224" stroke="#0F6E56" stroke-width="2"/>
+<line x1="448" y1="208" x2="448" y2="224" stroke="#0F6E56" stroke-width="2"/>
+<line x1="560" y1="208" x2="560" y2="224" stroke="#0F6E56" stroke-width="2"/>
+<text x="200" y="244" font-size="13" text-anchor="middle" fill="currentColor">0</text>
+<text x="448" y="244" font-size="13" font-weight="600" text-anchor="middle" fill="#0F6E56">m / s</text>
+<text x="560" y="244" font-size="13" text-anchor="middle" fill="#0F6E56">L_train</text>
+<text x="380" y="280" font-size="13" text-anchor="middle" fill="currentColor" opacity="0.7">s = L_test / L_train，端点与中间位置按同一比例映射</text>
+</svg>
+</div>
+
+因此，位置 $m$ 被映射为 $m/s$；从频率角度看，等价于令 $\theta_i'=\theta_i/s$。特别地，$L_{\text{test}}/s=L_{\text{train}}$，测试端点及其中间位置的相位范围都被压回训练区间。
 
 ## 2. 简单实现
 
@@ -200,13 +235,54 @@ YaRN 将 NTK-by-parts 插值与注意力缩放结合起来。它不再对所有�
 
 ## 2. 分频段插值
 
-YaRN 根据各频率在原训练窗口内经历的旋转次数决定缩放方式：
+YaRN 根据各频率在原训练窗口内经历的旋转次数决定缩放方式：高频部分保留原频率，低频部分按 $1/s$ 插值，中间频段通过 ramp function 平滑过渡。下面以频率缩放比 $\theta_i'/\theta_i$ 对比三种策略；横轴严格沿用本文定义，$i=0$ 在左侧、对应最高频率，$i$ 越大则频率越低。
 
-- 高频部分在训练窗口内已经旋转多轮，保留原频率，以维持局部位置分辨率；
-- 低频部分的波长接近或超过训练窗口，按 $1/s$ 插值，避免直接进入训练外相位；
-- 中间频段通过 ramp function 在两种策略之间平滑过渡。
+<div style="overflow-x:auto">
+<svg width="100%" style="max-width:820px;min-width:740px" viewBox="0 0 820 430" role="img">
+<title>PI、NTK-aware 与 YaRN 的频谱缩放对比</title>
+<desc>横轴从左到右是递增的频率组索引，左侧 i 等于零为最高频，右侧索引较大为低频；纵轴是缩放后频率除以原频率。PI 在所有频率上统一取一除以 s，NTK-aware 从高频少变化平滑过渡到低频更多压缩，YaRN 保持高频不变、低频取一除以 s，并在中频平滑过渡。</desc>
+<defs>
+<marker id="length-spectrum-axis-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+<path d="M2 1L8 5L2 9" fill="none" stroke="#888780" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+</defs>
+<text x="410" y="24" font-size="15" font-weight="600" text-anchor="middle" fill="currentColor">三种方法如何缩放 RoPE 频率谱</text>
+<line x1="92" y1="55" x2="124" y2="55" stroke="currentColor" stroke-width="2.5" stroke-dasharray="6 4" opacity="0.6"/>
+<text x="134" y="59" font-size="13" fill="currentColor">PI：统一缩放</text>
+<line x1="302" y1="55" x2="334" y2="55" stroke="#0F6E56" stroke-width="3"/>
+<text x="344" y="59" font-size="13" fill="#0F6E56">NTK-aware：非均匀缩放</text>
+<line x1="570" y1="55" x2="602" y2="55" stroke="#D85A30" stroke-width="3"/>
+<text x="612" y="59" font-size="13" fill="#D85A30">YaRN：分频段缩放</text>
+<rect x="120" y="90" width="180" height="250" fill="#E1F5EE" opacity="0.22"/>
+<rect x="300" y="90" width="260" height="250" fill="currentColor" opacity="0.025"/>
+<rect x="560" y="90" width="180" height="250" fill="#FAECE7" opacity="0.24"/>
+<text x="210" y="110" font-size="12.5" text-anchor="middle" fill="#0F6E56">高频组</text>
+<text x="430" y="110" font-size="12.5" text-anchor="middle" fill="currentColor" opacity="0.65">中间频段</text>
+<text x="650" y="110" font-size="12.5" text-anchor="middle" fill="#993C1D">低频组</text>
+<line x1="120" y1="340" x2="120" y2="118" stroke="currentColor" stroke-width="1.5" opacity="0.55" marker-end="url(#length-spectrum-axis-arrow)"/>
+<line x1="120" y1="340" x2="752" y2="340" stroke="currentColor" stroke-width="1.5" opacity="0.55" marker-end="url(#length-spectrum-axis-arrow)"/>
+<line x1="114" y1="130" x2="126" y2="130" stroke="currentColor" stroke-width="1.25" opacity="0.55"/>
+<line x1="114" y1="310" x2="126" y2="310" stroke="currentColor" stroke-width="1.25" opacity="0.55"/>
+<text x="104" y="134" font-size="13" text-anchor="end" fill="currentColor">1</text>
+<text x="104" y="314" font-size="13" text-anchor="end" fill="currentColor">1 / s</text>
+<text x="58" y="230" font-size="13" text-anchor="middle" fill="currentColor" transform="rotate(-90 58 230)">频率缩放比 θ′ / θ</text>
+<line x1="300" y1="116" x2="300" y2="340" stroke="currentColor" stroke-width="1" stroke-dasharray="4 4" opacity="0.18"/>
+<line x1="560" y1="116" x2="560" y2="340" stroke="currentColor" stroke-width="1" stroke-dasharray="4 4" opacity="0.18"/>
+<path d="M120 310 H740" fill="none" stroke="currentColor" stroke-width="2.5" stroke-dasharray="7 5" opacity="0.6"/>
+<path d="M120 130 C270 143 505 246 740 310" fill="none" stroke="#0F6E56" stroke-width="3" stroke-linecap="round"/>
+<path d="M120 130 H285 C375 130 478 310 575 310 H740" fill="none" stroke="#D85A30" stroke-width="3" stroke-linecap="round"/>
+<circle cx="120" cy="130" r="4.5" fill="#E1F5EE" stroke="#0F6E56" stroke-width="1.5"/>
+<circle cx="285" cy="130" r="4" fill="#FAECE7" stroke="#D85A30" stroke-width="1.5"/>
+<circle cx="575" cy="310" r="4" fill="#FAECE7" stroke="#D85A30" stroke-width="1.5"/>
+<text x="120" y="374" font-size="13" text-anchor="start" fill="#0F6E56">高频：i = 0</text>
+<text x="430" y="374" font-size="13" text-anchor="middle" fill="currentColor" opacity="0.7">维度 / 频率组索引 i 增大 →</text>
+<text x="740" y="374" font-size="13" text-anchor="end" fill="#993C1D">低频：i 较大</text>
+<rect x="128" y="392" width="604" height="28" rx="14" fill="#FAEEDA" opacity="0.85"/>
+<text x="430" y="406" font-size="12.5" text-anchor="middle" dominant-baseline="central" fill="#854F0B">YaRN：高频不变 · 中频平滑过渡 · 低频按 1 / s 插值</text>
+</svg>
+</div>
 
-因此 YaRN 不是简单地把“长距离对应的频率全部变慢”，而是根据各维度在训练窗口内经历的旋转次数选择插值程度。
+图中 PI 对所有频率使用同一比例；NTK-aware 的高频变化较少、低频压缩更多；YaRN 则明确分段，在保留局部分辨率的同时延长低频周期。
 
 ## 3. 注意力缩放
 

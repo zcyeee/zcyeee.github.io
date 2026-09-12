@@ -70,9 +70,49 @@ $$
 
 ## 2. 几何意义
 
-旋转矩阵只改变向量方向，不改变向量长度。若把 $x$ 看成从原点出发的箭头，$R(\theta)x$ 就是将这个箭头绕原点逆时针旋转 $\theta$ 后的位置。
+下图把 $x$ 与 $x'=R(\theta)x$ 画在同一坐标系中：旋转只改变方向，两个端点与原点的距离保持相同。
 
-> 旋转是一种保持几何结构的变换，它不会拉伸或压缩向量。
+<div style="overflow-x:auto">
+<svg width="100%" style="max-width:680px;min-width:600px" viewBox="0 0 680 300" role="img">
+<title>二维向量逆时针旋转并保持长度</title>
+<desc>第一象限中，原向量 x 从原点指向右上方，经过角度 θ 的逆时针旋转后得到更靠上的 x′。两支向量的端点位于同一条四分之一圆弧上，表示旋转前后长度相等。</desc>
+<defs>
+<marker id="rotation-basic-axis-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+<path d="M2 1L8 5L2 9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+<marker id="rotation-basic-green-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+<path d="M2 1L8 5L2 9" fill="none" stroke="#0F6E56" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+<marker id="rotation-basic-orange-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+<path d="M2 1L8 5L2 9" fill="none" stroke="#BA7517" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+</defs>
+<text x="34" y="28" font-size="16" font-weight="600" fill="currentColor">二维旋转：方向改变，长度不变</text>
+<text x="34" y="49" font-size="12.5" fill="currentColor" opacity="0.65">x′ = R(θ)x，正角度表示逆时针旋转</text>
+<path d="M250 260A160 160 0 0 0 90 100" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="4 6" opacity="0.22"/>
+<path d="M70 260H392" fill="none" stroke="currentColor" stroke-width="1.1" opacity="0.45" marker-end="url(#rotation-basic-axis-arrow)"/>
+<path d="M90 280V70" fill="none" stroke="currentColor" stroke-width="1.1" opacity="0.45" marker-end="url(#rotation-basic-axis-arrow)"/>
+<text x="388" y="249" font-size="12" text-anchor="end" fill="currentColor" opacity="0.62">第 1 维</text>
+<text x="104" y="77" font-size="12" fill="currentColor" opacity="0.62">第 2 维</text>
+<path d="M90 260L228.6 180" fill="none" stroke="#0F6E56" stroke-width="3" stroke-linecap="round" marker-end="url(#rotation-basic-green-arrow)"/>
+<path d="M90 260L157.6 115" fill="none" stroke="#BA7517" stroke-width="3" stroke-linecap="round" marker-end="url(#rotation-basic-orange-arrow)"/>
+<path d="M129 237.5A45 45 0 0 0 109 219.2" fill="none" stroke="#BA7517" stroke-width="2" stroke-linecap="round" marker-end="url(#rotation-basic-orange-arrow)"/>
+<circle cx="90" cy="260" r="4.5" fill="currentColor"/>
+<text x="76" y="282" font-size="12.5" fill="currentColor" opacity="0.72">原点</text>
+<text x="239" y="179" font-size="15" font-weight="600" fill="#0F6E56">x</text>
+<text x="151" y="101" font-size="15" font-weight="600" fill="#BA7517">x′</text>
+<text x="114" y="222" font-size="13.5" font-weight="600" fill="#BA7517">θ</text>
+<text x="148" y="232" font-size="12" fill="#BA7517">逆时针</text>
+<rect x="430" y="82" width="204" height="88" rx="10" fill="currentColor" opacity="0.045"/>
+<line x1="450" y1="110" x2="478" y2="110" stroke="#0F6E56" stroke-width="3" stroke-linecap="round"/>
+<text x="490" y="114" font-size="13.5" fill="currentColor">∥x∥ = r</text>
+<line x1="450" y1="141" x2="478" y2="141" stroke="#BA7517" stroke-width="3" stroke-linecap="round"/>
+<text x="490" y="145" font-size="13.5" fill="currentColor">∥x′∥ = r</text>
+<rect x="416" y="202" width="232" height="66" rx="10" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.75"/>
+<text x="532" y="225" font-size="12.5" text-anchor="middle" fill="#085041">端点落在同一条半径 r 圆弧上</text>
+<text x="532" y="251" font-size="15" font-weight="600" text-anchor="middle" fill="#04342C">∥x′∥ = ∥x∥</text>
+</svg>
+</div>
 
 ---
 
@@ -201,7 +241,55 @@ $$
 
 ## 1. 两个向量旋转不同角度
 
-现在考虑两个向量 $q,k$。若 $q$ 旋转角度 $m\theta$，$k$ 旋转角度 $n\theta$，则它们的点积为：
+现在考虑两个向量 $q,k$。下图取 $n>m$，并暂时将二者的初始方向对齐，以单独显示位置旋转产生的夹角 $(n-m)\theta$；一般情形不要求 $q,k$ 同向，后面的矩阵推导仍然成立。
+
+<div style="overflow-x:auto">
+<svg width="100%" style="max-width:680px;min-width:620px" viewBox="0 0 680 400" role="img">
+<title>查询向量与键向量旋转后的相对角度</title>
+<desc>示意图令 q 与 k 的初始方向对齐。q 逆时针旋转 mθ，k 逆时针旋转 nθ，且 n 大于 m；两条旋转后向量之间的夹角为 (n−m)θ，说明点积中的位置依赖只与相对旋转有关。</desc>
+<defs>
+<marker id="rotation-relative-axis-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+<path d="M2 1L8 5L2 9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+<marker id="rotation-relative-green-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto">
+<path d="M2 1L8 5L2 9" fill="none" stroke="#0F6E56" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+<marker id="rotation-relative-orange-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5.5" markerHeight="5.5" orient="auto">
+<path d="M2 1L8 5L2 9" fill="none" stroke="#BA7517" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+</defs>
+<text x="34" y="28" font-size="16" font-weight="600" fill="currentColor">两个绝对旋转，相减得到相对角度</text>
+<text x="34" y="49" font-size="12.5" fill="currentColor" opacity="0.65">示意取 n &gt; m；共同初始方向仅用于隔离位置带来的旋转差</text>
+<path d="M56 270H426" fill="none" stroke="currentColor" stroke-width="1.1" opacity="0.35" marker-end="url(#rotation-relative-axis-arrow)"/>
+<path d="M220 325V75" fill="none" stroke="currentColor" stroke-width="1" opacity="0.18" marker-end="url(#rotation-relative-axis-arrow)"/>
+<path d="M220 270H421" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="5 5" opacity="0.3"/>
+<text x="421" y="291" font-size="12" text-anchor="end" fill="currentColor" opacity="0.62">q、k 的共同初始方向</text>
+<path d="M220 270L365 202.4" fill="none" stroke="#0F6E56" stroke-width="3" stroke-linecap="round" marker-end="url(#rotation-relative-green-arrow)"/>
+<path d="M220 270L287.4 103.1" fill="none" stroke="#BA7517" stroke-width="3" stroke-linecap="round" marker-end="url(#rotation-relative-orange-arrow)"/>
+<path d="M262 270A42 42 0 0 0 258.1 252.3" fill="none" stroke="#0F6E56" stroke-width="1.75" marker-end="url(#rotation-relative-green-arrow)"/>
+<path d="M275 270A55 55 0 0 0 240.6 219" fill="none" stroke="#BA7517" stroke-width="1.75" marker-end="url(#rotation-relative-orange-arrow)"/>
+<path d="M303.4 231.1A92 92 0 0 0 254.5 184.7" fill="none" stroke="#BA7517" stroke-width="3" stroke-linecap="round" marker-end="url(#rotation-relative-orange-arrow)"/>
+<circle cx="220" cy="270" r="4.5" fill="currentColor"/>
+<text x="208" y="289" font-size="12.5" fill="currentColor" opacity="0.72">原点</text>
+<text x="374" y="202" font-size="14" font-weight="600" fill="#0F6E56">R(mθ)q</text>
+<text x="273" y="90" font-size="14" font-weight="600" fill="#BA7517">R(nθ)k</text>
+<text x="267" y="260" font-size="12.5" fill="#0F6E56">mθ</text>
+<text x="245" y="221" font-size="12.5" fill="#BA7517">nθ</text>
+<text x="300" y="186" font-size="14" font-weight="600" fill="#BA7517">(n−m)θ</text>
+<rect x="454" y="88" width="190" height="112" rx="10" fill="currentColor" opacity="0.045"/>
+<circle cx="474" cy="116" r="5" fill="#0F6E56"/>
+<text x="489" y="121" font-size="13" fill="currentColor">位置 m：q 旋转 mθ</text>
+<circle cx="474" cy="151" r="5" fill="#BA7517"/>
+<text x="489" y="156" font-size="13" fill="currentColor">位置 n：k 旋转 nθ</text>
+<text x="549" y="184" font-size="12" text-anchor="middle" fill="currentColor" opacity="0.62">绝对角度各自不同</text>
+<rect x="454" y="230" width="190" height="104" rx="10" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.75"/>
+<text x="549" y="254" font-size="12.5" text-anchor="middle" fill="#085041">点积中的位置依赖</text>
+<text x="549" y="282" font-size="17" font-weight="600" text-anchor="middle" fill="#04342C">m，n → n−m</text>
+<text x="549" y="313" font-size="12" text-anchor="middle" fill="#085041">具体数值仍由 q、k 决定</text>
+</svg>
+</div>
+
+若 $q$ 旋转角度 $m\theta$，$k$ 旋转角度 $n\theta$，则它们的点积为：
 
 $$
 (R(m\theta)q)^T(R(n\theta)k)
@@ -239,7 +327,7 @@ $$
 
 这个结果非常关键：**点积不再分别依赖 $m$ 和 $n$，而是通过 $n-m$ 依赖二者的相对距离**。
 
-> RoPE 的数学核心：如果 query 和 key 分别按自己的位置旋转，那么它们的注意力点积会自然包含相对位置信息。
+这里的“只依赖相对位置”特指位置变量的进入方式；点积的具体数值仍由内容向量 $q,k$ 共同决定。
 
 ---
 

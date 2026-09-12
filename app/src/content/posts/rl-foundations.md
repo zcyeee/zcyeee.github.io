@@ -383,6 +383,47 @@ Actor-Critic 方法结合了 policy-based 和 value-based 的思想：
 
 Actor 根据 Critic 提供的价值信号更新策略，Critic 根据环境反馈学习价值函数。
 
+<div style="overflow-x:auto">
+<svg width="100%" style="max-width:780px;min-width:700px" viewBox="0 0 780 372" role="img">
+<title>Actor-Critic 与环境之间的数据流</title>
+<desc>当前状态同时输入 Actor 和 Critic。Actor 选择动作交给环境，环境返回奖励和下一状态。Critic 综合状态与反馈估计价值或优势，并把该信号用于更新 Actor。</desc>
+<defs>
+<marker id="rl-ac-policy-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+<path d="M2 1L8 5L2 9" fill="none" stroke="#0F6E56" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+<marker id="rl-ac-feedback-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+<path d="M2 1L8 5L2 9" fill="none" stroke="#D85A30" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+</defs>
+<text x="390" y="25" font-size="16" font-weight="600" text-anchor="middle" fill="currentColor">Actor / Critic / Environment 数据流</text>
+<rect x="310" y="48" width="160" height="42" rx="21" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.75"/>
+<text x="390" y="69" font-size="13.5" font-weight="600" text-anchor="middle" dominant-baseline="central" fill="#04342C">当前状态 sₜ</text>
+<path d="M340 90L190 124" fill="none" stroke="#0F6E56" stroke-width="1.75" marker-end="url(#rl-ac-policy-arrow)"/>
+<path d="M440 90L590 124" fill="none" stroke="#0F6E56" stroke-width="1.75" marker-end="url(#rl-ac-policy-arrow)"/>
+<rect x="70" y="124" width="180" height="64" rx="12" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.75"/>
+<text x="160" y="146" font-size="15" font-weight="600" text-anchor="middle" dominant-baseline="central" fill="#04342C">Actor · 策略网络</text>
+<text x="160" y="170" font-size="13" text-anchor="middle" dominant-baseline="central" fill="#0F6E56">根据状态选择动作</text>
+<rect x="530" y="124" width="180" height="64" rx="12" fill="#FAECE7" stroke="#D85A30" stroke-width="0.75"/>
+<text x="620" y="146" font-size="15" font-weight="600" text-anchor="middle" dominant-baseline="central" fill="#4A1B0C">Critic · 价值网络</text>
+<text x="620" y="170" font-size="13" text-anchor="middle" dominant-baseline="central" fill="#993C1D">估计 V(s) 或 Q(s, a)</text>
+<path d="M530 156H250" fill="none" stroke="#D85A30" stroke-width="2" marker-end="url(#rl-ac-feedback-arrow)"/>
+<rect x="315" y="135" width="150" height="42" rx="9" fill="#FAECE7" stroke="#D85A30" stroke-width="0.5"/>
+<text x="390" y="151" font-size="12.5" font-weight="600" text-anchor="middle" dominant-baseline="central" fill="#993C1D">价值 / 优势信号</text>
+<text x="390" y="166" font-size="11.5" text-anchor="middle" dominant-baseline="central" fill="#993C1D">用于更新 Actor</text>
+<rect x="300" y="268" width="180" height="66" rx="12" fill="#F1EFE8" stroke="currentColor" stroke-width="0.75" stroke-opacity="0.45"/>
+<text x="390" y="290" font-size="15" font-weight="600" text-anchor="middle" dominant-baseline="central" fill="#2C2C2A">环境 Environment</text>
+<text x="390" y="314" font-size="12.5" text-anchor="middle" dominant-baseline="central" fill="#5F5E5A">执行动作并产生反馈</text>
+<path d="M160 188L330 268" fill="none" stroke="#0F6E56" stroke-width="2" marker-end="url(#rl-ac-policy-arrow)"/>
+<rect x="192" y="215" width="92" height="26" rx="13" fill="#E1F5EE"/>
+<text x="238" y="228" font-size="12.5" font-weight="600" text-anchor="middle" dominant-baseline="central" fill="#0F6E56">动作 aₜ</text>
+<path d="M450 268L620 188" fill="none" stroke="#D85A30" stroke-width="2" marker-end="url(#rl-ac-feedback-arrow)"/>
+<rect x="496" y="211" width="142" height="42" rx="9" fill="#FAECE7"/>
+<text x="567" y="227" font-size="12.5" font-weight="600" text-anchor="middle" dominant-baseline="central" fill="#993C1D">奖励 rₜ</text>
+<text x="567" y="242" font-size="11.5" text-anchor="middle" dominant-baseline="central" fill="#993C1D">下一状态 sₜ₊₁</text>
+<text x="390" y="359" font-size="12.5" text-anchor="middle" fill="currentColor" opacity="0.65">sₜ₊₁ 在下一轮成为新的当前状态；Critic 的估计用于构造 Actor 的更新信号</text>
+</svg>
+</div>
+
 ## 2. 优势函数
 
 Actor-Critic 中常使用优势函数：

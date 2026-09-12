@@ -119,12 +119,7 @@ $$
 
 ## 1. 动机
 
-纯 MC 和纯 TD 各处极端：
-
-- **纯 TD**（$\lambda=0$）：低方差、高偏差 → 训练稳定，但收敛慢、易局部最优
-- **纯 MC**（$\lambda=1$）：低偏差、高方差 → 无偏，但训练震荡、难收敛
-
-GAE 通过参数 $\lambda \in [0,1]$ 在二者之间做**可控插值**。
+纯 TD（$\lambda=0$）位于低方差、高偏差的一端，纯 MC（$\lambda=1$）位于低偏差、高方差的另一端；GAE 通过 $\lambda \in [0,1]$ 在二者之间做**可控插值**。
 
 ## 2. 公式
 
@@ -155,6 +150,78 @@ $$
 A_t^{GAE} = \sum_{l=0}^{T-t-1} \gamma^l \delta_{t+l} = G_t - V_\theta(s_t) = A_t^{MC}
 $$
 
+下图共用一条从 $s_t$ 到终点的时间轴：MC 使用整段真实回报，TD 在一步后用 Critic 自举，GAE 则同时纳入多种跨度，并让更远的 TD 误差按 $(\gamma\lambda)^l$ 衰减。
+
+<div style="overflow-x:auto">
+<svg width="100%" style="max-width:680px;min-width:620px" viewBox="0 0 680 420" role="img" aria-labelledby="gae-backup-title gae-backup-desc">
+<title id="gae-backup-title">MC、TD 与 GAE 的回传跨度和偏差方差折中</title>
+<desc id="gae-backup-desc">时间轴从状态 s t 延伸到终点。蒙特卡洛跨越完整轨迹；单步 TD 只前进一步并从下一状态价值自举；GAE 混合从一步到更长距离的 TD 误差，距离越远权重按 gamma lambda 的 l 次方衰减、线条越淡。lambda 从零增至一时偏差降低而方差升高。</desc>
+<defs>
+<marker id="gae-time-axis-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+<path d="M2 1L8 5L2 9" fill="none" stroke="#888780" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+</defs>
+<text x="340" y="22" font-size="16" font-weight="600" text-anchor="middle" fill="currentColor">同一条轨迹，不同的 backup 跨度</text>
+<text x="340" y="43" font-size="12.5" text-anchor="middle" fill="currentColor" opacity="0.65">跨度越长，真实奖励越多、自举依赖越少，但采样噪声越大</text>
+<text x="38" y="76" font-size="12.5" fill="currentColor" opacity="0.65">时间</text>
+<path d="M88 72 H642" fill="none" stroke="#888780" stroke-width="1.25" marker-end="url(#gae-time-axis-arrow)"/>
+<line x1="130" y1="76" x2="130" y2="340" stroke="currentColor" stroke-width="0.5" stroke-dasharray="3 5" opacity="0.12"/>
+<line x1="225" y1="76" x2="225" y2="340" stroke="currentColor" stroke-width="0.5" stroke-dasharray="3 5" opacity="0.12"/>
+<line x1="320" y1="76" x2="320" y2="340" stroke="currentColor" stroke-width="0.5" stroke-dasharray="3 5" opacity="0.12"/>
+<line x1="415" y1="76" x2="415" y2="340" stroke="currentColor" stroke-width="0.5" stroke-dasharray="3 5" opacity="0.12"/>
+<line x1="600" y1="76" x2="600" y2="340" stroke="currentColor" stroke-width="0.5" stroke-dasharray="3 5" opacity="0.12"/>
+<circle cx="130" cy="72" r="5" fill="#E1F5EE" stroke="#0F6E56" stroke-width="1.5"/>
+<circle cx="225" cy="72" r="4" fill="#F1EFE8" stroke="#888780" stroke-width="1"/>
+<circle cx="320" cy="72" r="4" fill="#F1EFE8" stroke="#888780" stroke-width="1"/>
+<circle cx="415" cy="72" r="4" fill="#F1EFE8" stroke="#888780" stroke-width="1"/>
+<circle cx="600" cy="72" r="5" fill="#FAEEDA" stroke="#BA7517" stroke-width="1.5"/>
+<text x="130" y="96" font-size="12.5" text-anchor="middle" fill="currentColor">sₜ</text>
+<text x="225" y="96" font-size="12.5" text-anchor="middle" fill="currentColor">sₜ₊₁</text>
+<text x="320" y="96" font-size="12.5" text-anchor="middle" fill="currentColor">sₜ₊₂</text>
+<text x="415" y="96" font-size="12.5" text-anchor="middle" fill="currentColor">sₜ₊₃</text>
+<text x="505" y="93" font-size="16" text-anchor="middle" fill="currentColor" opacity="0.55">…</text>
+<text x="600" y="96" font-size="12.5" text-anchor="middle" fill="currentColor">终点</text>
+<rect x="28" y="114" width="4" height="42" rx="2" fill="#0F6E56"/>
+<text x="42" y="135" font-size="14" font-weight="600" dominant-baseline="central" fill="currentColor">MC</text>
+<path d="M130 126 H600" fill="none" stroke="#0F6E56" stroke-width="3" stroke-linecap="round"/>
+<circle cx="600" cy="126" r="4" fill="#0F6E56"/>
+<text x="365" y="149" font-size="12.5" text-anchor="middle" fill="currentColor" opacity="0.72">完整奖励序列，一直计算到终点 · 不 bootstrap</text>
+<rect x="28" y="174" width="4" height="44" rx="2" fill="#BA7517"/>
+<text x="42" y="196" font-size="14" font-weight="600" dominant-baseline="central" fill="currentColor">TD</text>
+<path d="M130 190 H225" fill="none" stroke="#BA7517" stroke-width="3" stroke-linecap="round"/>
+<circle cx="225" cy="190" r="4" fill="#BA7517"/>
+<rect x="244" y="173" width="176" height="34" rx="8" fill="#FAEEDA" stroke="#BA7517" stroke-width="0.5"/>
+<text x="332" y="190" font-size="12.5" text-anchor="middle" dominant-baseline="central" fill="#633806">一步后 bootstrap：V(sₜ₊₁)</text>
+<text x="438" y="196" font-size="12.5" fill="currentColor" opacity="0.68">仅用 rₜ + γV(sₜ₊₁)</text>
+<line x1="28" y1="232" x2="652" y2="232" stroke="currentColor" stroke-width="0.5" opacity="0.2"/>
+<rect x="28" y="248" width="4" height="94" rx="2" fill="#0F6E56"/>
+<text x="42" y="278" font-size="14" font-weight="600" fill="currentColor">GAE</text>
+<text x="42" y="297" font-size="12" fill="currentColor" opacity="0.62">多尺度</text>
+<text x="42" y="313" font-size="12" fill="currentColor" opacity="0.62">加权和</text>
+<path d="M130 255 H225" fill="none" stroke="#0F6E56" stroke-width="3" stroke-linecap="round"/>
+<circle cx="225" cy="255" r="3.5" fill="#0F6E56"/>
+<text x="177" y="248" font-size="11.5" text-anchor="middle" fill="#0F6E56">l = 0 · 权重 1</text>
+<path d="M130 280 H320" fill="none" stroke="#0F6E56" stroke-width="3" stroke-linecap="round" opacity="0.78"/>
+<circle cx="320" cy="280" r="3.5" fill="#0F6E56" opacity="0.78"/>
+<text x="225" y="273" font-size="11.5" text-anchor="middle" fill="#0F6E56" opacity="0.78">l = 1 · 权重 γλ</text>
+<path d="M130 305 H415" fill="none" stroke="#0F6E56" stroke-width="3" stroke-linecap="round" opacity="0.55"/>
+<circle cx="415" cy="305" r="3.5" fill="#0F6E56" opacity="0.55"/>
+<text x="272" y="298" font-size="11.5" text-anchor="middle" fill="#0F6E56" opacity="0.72">l = 2 · 权重 (γλ)²</text>
+<path d="M130 330 H600" fill="none" stroke="#0F6E56" stroke-width="3" stroke-linecap="round" opacity="0.28"/>
+<circle cx="600" cy="330" r="3.5" fill="#0F6E56" opacity="0.38"/>
+<text x="365" y="323" font-size="11.5" text-anchor="middle" fill="currentColor" opacity="0.52">更远的 l · 权重 (γλ)ˡ</text>
+<rect x="45" y="362" width="178" height="34" rx="8" fill="#FAEEDA" stroke="#BA7517" stroke-width="0.5"/>
+<text x="134" y="379" font-size="12.5" text-anchor="middle" dominant-baseline="central" fill="#633806">TD · 低方差 / 高偏差</text>
+<rect x="251" y="362" width="178" height="34" rx="8" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="0.5"/>
+<text x="340" y="379" font-size="12.5" text-anchor="middle" dominant-baseline="central" fill="#2C2C2A">GAE · λ 控制折中</text>
+<rect x="457" y="362" width="178" height="34" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<text x="546" y="379" font-size="12.5" text-anchor="middle" dominant-baseline="central" fill="#04342C">MC · 高方差 / 低偏差</text>
+<text x="340" y="412" font-size="12.5" text-anchor="middle" fill="currentColor" opacity="0.72">λ 从 0 增至 1：自举偏差下降，采样方差上升</text>
+</svg>
+</div>
+
+GAE 不是选择某一个固定回传长度，而是把不同距离的 TD 误差叠加起来；$\lambda$ 越大，远期项衰减越慢，估计越接近 MC。
+
 ## 4. 两个超参：$\gamma$ 与 $\lambda$ 的区别
 
 | 超参 | 含义 | 典型值 | 属于 |
@@ -166,9 +233,7 @@ $$
 
 **偏差-方差可控权衡**
 
-- $\lambda$ 小 → 更像 TD：方差小、偏差大 → 训练稳，收敛慢
-- $\lambda$ 大 → 更像 MC：偏差小、方差大 → 收敛快，易震荡
-- 通常取 $\lambda \approx 0.95$，在两者间取得最优平衡
+$\lambda$ 小时更像 TD，$\lambda$ 大时更像 MC；实践中常取 $\lambda \approx 0.95$，在偏差与方差之间折中。
 
 **指数平滑，梯度更稳定**
 

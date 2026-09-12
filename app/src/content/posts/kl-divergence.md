@@ -128,6 +128,45 @@ $$
 
 **典型场景**：在策略约束、策略蒸馏、RLHF 等设定中，常见目标是让新策略贴近参考策略并抑制分布外动作，可近似理解为反向 KL 的优化倾向：允许 $Q$ 选择性忽略 $P$ 的某些低概率区域（如罕见动作）。
 
+下面固定双峰目标分布 $P$，并假设近似分布 $Q$ 只能表示单峰。两种 KL 的不同惩罚方向会让 $Q$ 学出截然不同的形状：
+
+<div style="overflow-x:auto">
+<svg width="100%" style="max-width:680px;min-width:600px" viewBox="0 0 680 310" role="img">
+<title>正向 KL 与反向 KL 拟合双峰分布的行为对比</title>
+<desc>左图中正向 KL 使单峰分布 Q 展宽以覆盖目标分布 P 的两个峰；右图中反向 KL 使 Q 只贴合 P 的一个峰并忽略另一个峰。</desc>
+<text x="184" y="24" font-size="16" font-weight="600" text-anchor="middle" fill="currentColor">最小化 D_KL(P ‖ Q)</text>
+<text x="184" y="46" font-size="13.5" text-anchor="middle" fill="currentColor" opacity="0.65">正向 KL · Mass covering</text>
+<line x1="48" y1="225" x2="320" y2="225" stroke="currentColor" stroke-width="0.75" opacity="0.35"/>
+<path d="M50 225 C72 225 86 210 96 165 C102 130 108 97 126 91 C144 97 150 130 156 165 C165 208 178 219 188 219 C200 219 211 207 219 165 C225 130 231 97 249 91 C267 97 273 130 279 165 C289 210 299 225 318 225"
+      fill="none" stroke="#185FA5" stroke-width="2.5" stroke-linecap="round"/>
+<path d="M50 225 C76 223 92 213 108 194 C130 166 151 137 184 125 C217 137 238 166 260 194 C276 213 292 223 318 225"
+      fill="none" stroke="#D85A30" stroke-width="2.5" stroke-linecap="round"/>
+<text x="116" y="82" font-size="14" font-weight="600" fill="#185FA5">P</text>
+<text x="187" y="116" font-size="14" font-weight="600" fill="#D85A30">Q</text>
+<path d="M184 139 L184 205" fill="none" stroke="#D85A30" stroke-width="1" stroke-dasharray="3 3" opacity="0.75"/>
+<text x="184" y="185" font-size="12.5" text-anchor="middle" fill="currentColor" opacity="0.7">峰间也分配概率</text>
+<line x1="340" y1="18" x2="340" y2="264" stroke="currentColor" stroke-width="0.5" opacity="0.2"/>
+<text x="504" y="24" font-size="16" font-weight="600" text-anchor="middle" fill="currentColor">最小化 D_KL(Q ‖ P)</text>
+<text x="504" y="46" font-size="13.5" text-anchor="middle" fill="currentColor" opacity="0.65">反向 KL · Mode seeking</text>
+<line x1="368" y1="225" x2="640" y2="225" stroke="currentColor" stroke-width="0.75" opacity="0.35"/>
+<path d="M370 225 C392 225 406 210 416 165 C422 130 428 97 446 91 C464 97 470 130 476 165 C485 208 498 219 508 219 C520 219 531 207 539 165 C545 130 551 97 569 91 C587 97 593 130 599 165 C609 210 619 225 638 225"
+      fill="none" stroke="#185FA5" stroke-width="2.5" stroke-linecap="round"/>
+<path d="M370 225 C397 225 411 213 421 169 C428 130 434 94 446 86 C458 94 464 130 471 169 C481 213 495 225 522 225 L638 225"
+      fill="none" stroke="#D85A30" stroke-width="2.5" stroke-linecap="round"/>
+<text x="436" y="78" font-size="14" font-weight="600" fill="#D85A30">Q</text>
+<text x="573" y="82" font-size="14" font-weight="600" fill="#185FA5">P</text>
+<path d="M569 105 L569 119" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="3 3" opacity="0.65"/>
+<text x="569" y="136" font-size="12.5" text-anchor="middle" fill="currentColor" opacity="0.7">该峰被忽略</text>
+<text x="184" y="251" font-size="13.5" text-anchor="middle" fill="currentColor">覆盖两个峰，但会填充低密度区域</text>
+<text x="504" y="251" font-size="13.5" text-anchor="middle" fill="currentColor">贴合一个峰，但可能发生模式坍塌</text>
+<line x1="40" y1="272" x2="640" y2="272" stroke="currentColor" stroke-width="0.5" opacity="0.2"/>
+<line x1="196" y1="292" x2="222" y2="292" stroke="#185FA5" stroke-width="2.5" stroke-linecap="round"/>
+<text x="230" y="296" font-size="13.5" fill="currentColor">目标分布 P</text>
+<line x1="356" y1="292" x2="382" y2="292" stroke="#D85A30" stroke-width="2.5" stroke-linecap="round"/>
+<text x="390" y="296" font-size="13.5" fill="currentColor">单峰近似 Q</text>
+</svg>
+</div>
+
 ## 3. 综合对比
 
 以双峰分布 $P$ 和单峰分布 $Q$ 为例：

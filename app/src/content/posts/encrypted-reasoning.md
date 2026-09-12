@@ -112,11 +112,77 @@ protobuf envelope
 
 [open-open-reasoning](https://github.com/archersama/open-open-reasoning) 把这条路线拆成三个阶段。本文基于其分享的思路，进行了相关实践与简单的调整。
 
-```text
-Harvest（采集）：生成隐藏推理并取得 signature
-Replay（回放）：重建 assistant thinking block，交回 signature
-Elicitation（诱导输出）：要求模型复制恢复后的工作区
-```
+<div style="overflow-x:auto">
+<svg width="100%" style="max-width:960px;min-width:880px" viewBox="0 0 960 530" role="img">
+<title>Harvest、Replay 与 Elicitation 的客户端服务端双泳道流程</title>
+<desc>Harvest 阶段客户端发送不含 canary 明文的提示，服务端在隐藏推理中生成 canary，并仅向客户端返回不透明 signature 和可见的 Done。Replay 阶段客户端把同一 signature 放进 transcript，服务端验证解密并恢复 reasoning。Elicitation 阶段客户端发送诱导提示，服务端基于恢复状态生成最终输出，其中出现 canary。橙色虚线追踪 canary：它只在服务端内部状态和最终输出中以明文出现，中间封装在 signature 中。</desc>
+<defs>
+<marker id="encrypted-replay-neutral-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+<path d="M2 1L8 5L2 9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+<marker id="encrypted-replay-success-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+<path d="M2 1L8 5L2 9" fill="none" stroke="#0F6E56" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+<marker id="encrypted-replay-canary-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+<path d="M2 1L8 5L2 9" fill="none" stroke="#BA7517" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+</defs>
+<text x="245" y="28" font-size="16" font-weight="600" text-anchor="middle" fill="currentColor">Harvest · 采集</text>
+<text x="530" y="28" font-size="16" font-weight="600" text-anchor="middle" fill="currentColor">Replay · 回放</text>
+<text x="810" y="28" font-size="16" font-weight="600" text-anchor="middle" fill="currentColor">Elicitation · 诱导输出</text>
+<rect x="10" y="48" width="940" height="142" rx="12" fill="#F1EFE8" stroke="currentColor" stroke-width="0.5" stroke-opacity="0.35"/>
+<rect x="10" y="204" width="940" height="244" rx="12" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.5"/>
+<text x="28" y="74" font-size="14" font-weight="600" fill="currentColor">客户端泳道</text>
+<text x="28" y="230" font-size="14" font-weight="600" fill="#042C53">服务端泳道</text>
+<path d="M400 48V448M665 48V448" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="4 5" opacity="0.24"/>
+<rect x="105" y="96" width="140" height="66" rx="9" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.7"/>
+<text x="175" y="119" font-size="14" font-weight="600" text-anchor="middle" fill="#26215C">Harvest prompt</text>
+<text x="175" y="143" font-size="13" text-anchor="middle" fill="#3C3489">不含 canary 明文</text>
+<path d="M175 162V252" fill="none" stroke="#0F6E56" stroke-width="1.7" marker-end="url(#encrypted-replay-success-arrow)"/>
+<text x="184" y="207" font-size="12.5" fill="#0F6E56">请求</text>
+<rect x="116" y="258" width="232" height="92" rx="9" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.8"/>
+<text x="232" y="280" font-size="14" font-weight="600" text-anchor="middle" fill="#04342C">隐藏 reasoning</text>
+<text x="232" y="302" font-size="13" text-anchor="middle" fill="#085041">解题并在服务端生成</text>
+<rect x="178" y="315" width="108" height="24" rx="12" fill="#FAEEDA" stroke="#BA7517" stroke-width="0.7"/>
+<text x="232" y="327" font-size="12.5" font-weight="600" text-anchor="middle" dominant-baseline="central" fill="#633806">canary 明文</text>
+<rect x="270" y="96" width="116" height="66" rx="9" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.7"/>
+<text x="328" y="119" font-size="13.5" font-weight="600" text-anchor="middle" fill="#04342C">opaque signature</text>
+<text x="328" y="143" font-size="13" text-anchor="middle" fill="#085041">+ 可见 Done.</text>
+<path d="M348 292C382 292 382 181 328 168" fill="none" stroke="#0F6E56" stroke-width="1.7" marker-end="url(#encrypted-replay-success-arrow)"/>
+<rect x="424" y="92" width="174" height="76" rx="9" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.7"/>
+<text x="511" y="114" font-size="14" font-weight="600" text-anchor="middle" fill="#26215C">重建 transcript</text>
+<text x="511" y="136" font-size="12.5" text-anchor="middle" fill="#3C3489">放入同一 opaque signature</text>
+<text x="511" y="155" font-size="12.5" text-anchor="middle" fill="#3C3489">thinking 留空；保留 Done.</text>
+<path d="M511 168V250" fill="none" stroke="#0F6E56" stroke-width="1.7" marker-end="url(#encrypted-replay-success-arrow)"/>
+<rect x="428" y="256" width="166" height="62" rx="9" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.8"/>
+<text x="511" y="278" font-size="14" font-weight="600" text-anchor="middle" fill="#04342C">验证并解密 signature</text>
+<text x="511" y="299" font-size="12.5" text-anchor="middle" fill="#085041">协议校验通过后处理</text>
+<path d="M511 318V344" fill="none" stroke="#0F6E56" stroke-width="1.7" marker-end="url(#encrypted-replay-success-arrow)"/>
+<rect x="428" y="350" width="166" height="62" rx="9" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.8"/>
+<text x="511" y="372" font-size="14" font-weight="600" text-anchor="middle" fill="#04342C">恢复 reasoning（含 canary）</text>
+<text x="511" y="393" font-size="12.5" text-anchor="middle" fill="#085041">回到服务端模型上下文</text>
+<rect x="686" y="96" width="120" height="66" rx="9" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.7"/>
+<text x="746" y="119" font-size="14" font-weight="600" text-anchor="middle" fill="#26215C">诱导 prompt</text>
+<text x="746" y="143" font-size="12.5" text-anchor="middle" fill="#3C3489">请求复制既有工作区</text>
+<path d="M746 162V252" fill="none" stroke="currentColor" stroke-width="1.5" stroke-opacity="0.65" marker-end="url(#encrypted-replay-neutral-arrow)"/>
+<rect x="682" y="258" width="128" height="72" rx="9" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.8"/>
+<text x="746" y="281" font-size="14" font-weight="600" text-anchor="middle" fill="#04342C">生成可见答复</text>
+<text x="746" y="303" font-size="12.5" text-anchor="middle" fill="#085041">基于恢复状态</text>
+<path d="M594 381H650C665 381 674 352 698 334" fill="none" stroke="#0F6E56" stroke-width="1.7" marker-end="url(#encrypted-replay-success-arrow)"/>
+<rect x="828" y="96" width="112" height="66" rx="9" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.8"/>
+<text x="884" y="118" font-size="14" font-weight="600" text-anchor="middle" fill="#04342C">最终输出</text>
+<text x="884" y="140" font-size="13" text-anchor="middle" fill="#085041">&lt;cot&gt; canary …</text>
+<path d="M810 294C842 294 848 188 872 168" fill="none" stroke="#0F6E56" stroke-width="1.7" marker-end="url(#encrypted-replay-success-arrow)"/>
+<path d="M286 327C374 327 363 146 386 146H424M598 146H620C636 146 636 287 600 287M594 287C630 287 630 381 600 381M594 381H650C665 381 674 335 682 315M810 315C858 315 846 180 884 168" fill="none" stroke="#BA7517" stroke-width="2.2" stroke-dasharray="7 5" marker-end="url(#encrypted-replay-canary-arrow)"/>
+<text x="396" y="184" font-size="12.5" text-anchor="middle" fill="#BA7517">客户端中途只见 opaque signature；无 canary 明文</text>
+<rect x="92" y="464" width="856" height="50" rx="9" fill="#FCEBEB" stroke="#A32D2D" stroke-width="0.7"/>
+<text x="110" y="484" font-size="13" font-weight="600" fill="#791F1F">边界：</text>
+<text x="154" y="484" font-size="13" fill="#791F1F">图示只表达服务端恢复的隐藏状态最终影响输出；signature 对客户端仍是不透明封装。</text>
+<text x="110" y="503" font-size="13" fill="#A32D2D">是否逐字恢复原始 CoT 不能由流程本身保证，仍需依靠后文的对照实验与一致性检验。</text>
+</svg>
+</div>
+
+橙色虚线只追踪判据值：Harvest 的客户端输入没有 canary 明文，客户端中途只能看到不透明的 `signature` 和 `Done.`；同一 `signature` 经服务端恢复后，canary 才在最终 `<cot>` 输出中出现。
 
 ## 1. Harvest（采集）：制造并取得 signature
 
@@ -165,7 +231,7 @@ Part 2: Then solve, showing every step in your reasoning:
 Your visible reply must be exactly: Done.
 ```
 
-prompt 里不存在具体的判据值，可见回复只有 `Done.`。判据值从生成到封存全程只存在于加密的 `signature` 内部，任何明文通道都拿不到它。
+prompt 里不存在具体的判据值，可见回复只有 `Done.`。在 Harvest 返回前，具体判据值只出现在服务端隐藏推理中；返回客户端后则由不透明的 `signature` 承载，Harvest 与 Replay 的客户端输入都没有可供照抄的 canary 明文。
 
 > 注意：harvest prompt 里不要出现 `keep secret`、`hidden`、`concealed` 这类词。一旦把隐藏推理框定成"秘密"，后续 elicitation 触发拒绝的概率明显上升。说成"过程写在 reasoning 里，可见回复只要一行确认"即可。
 
@@ -207,14 +273,7 @@ prompt 里不存在具体的判据值，可见回复只有 `Done.`。判据值�
 
 这里并没有伪造密码学签名，而是手动重建 API 原本返回的 assistant 消息：thinking 明文留空，放入此前采集的合法 `signature`，可见文本则还原为原回答。无状态 API 的历史本来就由客户端提交，服务端主要依靠 `signature` 判断 thinking block 是否可信。
 
-Anthropic 服务端按照正常协议验证并解密 `signature`，再把恢复后的 reasoning 放回 Claude 上下文。因此这里真正发生的是：
-
-```text
-客户端提交合法密文
-→ Anthropic 服务端解密
-→ reasoning 恢复进 Claude 上下文
-→ Claude 根据新提示输出文本
-```
+Anthropic 服务端按照正常协议验证并解密 `signature`，再把恢复后的 reasoning 放回 Claude 上下文；随后追加的 elicitation prompt 才驱动模型生成可见文本。
 
 如果请求经过中转网关，还要确认网关是否原样转发 thinking block。部分网关用自己的字段名承载推理块（例如 `type: "reasoning"`），直接写 Anthropic 原生的 `thinking` 结构会被静默剥掉。表现是请求正常返回 200，但模型对之前的推理一无所知（容易被误判成"重放失败"，实际上 `signature` 根本没回传到上游）。
 

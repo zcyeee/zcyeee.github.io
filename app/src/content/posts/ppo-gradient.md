@@ -677,8 +677,6 @@ r_t(\theta)\hat A_t
 \end{cases}
 $$
 
-> **直观含义**：当优势为正时，PPO 允许提高该动作概率；但当新策略相对旧策略已经把概率提高到 $1+\epsilon$ 以上时，该样本不再提供继续提高概率的梯度。
-
 ## 3. 负优势时的分段梯度
 
 再考虑 $\hat A_t<0$。此时动作差于平均，策略应降低该动作概率，即希望 $r_t(\theta)$ 减小。
@@ -717,25 +715,72 @@ r_t(\theta)\hat A_t
 \end{cases}
 $$
 
-> **直观含义**：当优势为负时，PPO 允许降低该动作概率；但当新策略相对旧策略已经把概率降低到 $1-\epsilon$ 以下时，该样本不再提供继续降低概率的梯度。
-
 ## 4. 分段梯度汇总
 
-将两种情况合并，可得到单样本梯度：
+下图把两种符号下的单样本最大化目标画成 $r_t(\theta)$ 的函数。绿色线段保留梯度，橙色水平线段表示该侧已被裁剪：
 
-| 优势符号 | 比值区间 | 目标项 | 是否有策略梯度 |
-|---|---|---|---|
-| $\hat A_t>0$ | $r_t \le 1+\epsilon$ | $r_t\hat A_t$ | 有 |
-| $\hat A_t>0$ | $r_t > 1+\epsilon$ | $(1+\epsilon)\hat A_t$ | 无 |
-| $\hat A_t<0$ | $r_t < 1-\epsilon$ | $(1-\epsilon)\hat A_t$ | 无 |
-| $\hat A_t<0$ | $r_t \ge 1-\epsilon$ | $r_t\hat A_t$ | 有 |
-
-因此，PPO-Clip 并不是简单把 $r_t$ 永远限制在 $[1-\epsilon,1+\epsilon]$ 内，而是限制“能带来目标函数继续变好的那一侧更新”：
-
-- $\hat A_t>0$：阻止动作概率被过度提高。
-- $\hat A_t<0$：阻止动作概率被过度降低。
-
-如果更新方向是在纠正已经偏离的概率，目标仍然保留梯度。
+<div style="overflow-x:auto">
+<svg width="100%" style="max-width:680px;min-width:620px" viewBox="0 0 680 340" role="img" aria-labelledby="ppo-clip-plot-title ppo-clip-plot-desc">
+<title id="ppo-clip-plot-title">PPO Clip 在正负优势下的分段目标与梯度</title>
+<desc id="ppo-clip-plot-desc">左右两个坐标图展示单样本裁剪目标随概率比变化的形状。正优势时，目标在一加 epsilon 之前线性上升，之后水平且梯度为零；负优势时，目标在一减 epsilon 之前水平且梯度为零，之后随概率比线性下降。</desc>
+<defs>
+<marker id="ppo-clip-axis-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+<path d="M2 1L8 5L2 9" fill="none" stroke="#888780" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+</defs>
+<text x="178" y="22" font-size="16" font-weight="600" text-anchor="middle" fill="currentColor">正优势 · Âₜ &gt; 0</text>
+<text x="178" y="43" font-size="12.5" text-anchor="middle" fill="currentColor" opacity="0.65">先线性增大，越过上界后不再奖励增大概率</text>
+<text x="504" y="22" font-size="16" font-weight="600" text-anchor="middle" fill="currentColor">负优势 · Âₜ &lt; 0</text>
+<text x="504" y="43" font-size="12.5" text-anchor="middle" fill="currentColor" opacity="0.65">下界左侧取更小的常数，越过下界后线性下降</text>
+<line x1="340" y1="14" x2="340" y2="300" stroke="currentColor" stroke-width="0.5" opacity="0.2"/>
+<path d="M50 220 V58" fill="none" stroke="#888780" stroke-width="1.25" marker-end="url(#ppo-clip-axis-arrow)"/>
+<path d="M46 218 H314" fill="none" stroke="#888780" stroke-width="1.25" marker-end="url(#ppo-clip-axis-arrow)"/>
+<text x="55" y="68" font-size="12.5" fill="currentColor" opacity="0.7">目标 Jₜ</text>
+<text x="282" y="208" font-size="12.5" fill="currentColor" opacity="0.7">rₜ(θ)</text>
+<line x1="100" y1="70" x2="100" y2="222" stroke="currentColor" stroke-width="0.75" stroke-dasharray="3 4" opacity="0.2"/>
+<line x1="170" y1="70" x2="170" y2="222" stroke="currentColor" stroke-width="0.75" stroke-dasharray="3 4" opacity="0.2"/>
+<line x1="240" y1="70" x2="240" y2="222" stroke="#BA7517" stroke-width="1" stroke-dasharray="4 3" opacity="0.7"/>
+<path d="M50 205 L240 108" fill="none" stroke="#0F6E56" stroke-width="3" stroke-linecap="round"/>
+<path d="M240 108 H308" fill="none" stroke="#BA7517" stroke-width="3" stroke-linecap="round"/>
+<circle cx="240" cy="108" r="4" fill="#FAEEDA" stroke="#BA7517" stroke-width="1.5"/>
+<text x="113" y="148" font-size="12.5" fill="#0F6E56">斜率 Âₜ &gt; 0</text>
+<text x="274" y="97" font-size="12.5" text-anchor="middle" fill="#BA7517">梯度 0</text>
+<line x1="100" y1="218" x2="100" y2="224" stroke="currentColor" stroke-width="1" opacity="0.6"/>
+<line x1="170" y1="218" x2="170" y2="224" stroke="currentColor" stroke-width="1" opacity="0.6"/>
+<line x1="240" y1="218" x2="240" y2="224" stroke="currentColor" stroke-width="1" opacity="0.6"/>
+<text x="100" y="243" font-size="12" text-anchor="middle" fill="currentColor" opacity="0.72">1 − ε</text>
+<text x="170" y="243" font-size="12" text-anchor="middle" fill="currentColor" opacity="0.72">1</text>
+<text x="240" y="243" font-size="12" text-anchor="middle" fill="currentColor" opacity="0.72">1 + ε</text>
+<path d="M50 263 H240" fill="none" stroke="#0F6E56" stroke-width="4" stroke-linecap="round"/>
+<path d="M240 263 H310" fill="none" stroke="#BA7517" stroke-width="4" stroke-linecap="round"/>
+<text x="145" y="284" font-size="12.5" text-anchor="middle" fill="#0F6E56">可更新区间</text>
+<text x="275" y="284" font-size="12.5" text-anchor="middle" fill="#BA7517">裁剪区间</text>
+<path d="M374 224 V58" fill="none" stroke="#888780" stroke-width="1.25" marker-end="url(#ppo-clip-axis-arrow)"/>
+<path d="M370 80 H644" fill="none" stroke="#888780" stroke-width="1.25" marker-end="url(#ppo-clip-axis-arrow)"/>
+<text x="379" y="68" font-size="12.5" fill="currentColor" opacity="0.7">目标 Jₜ</text>
+<text x="612" y="70" font-size="12.5" fill="currentColor" opacity="0.7">rₜ(θ)</text>
+<line x1="432" y1="76" x2="432" y2="224" stroke="#BA7517" stroke-width="1" stroke-dasharray="4 3" opacity="0.7"/>
+<line x1="502" y1="76" x2="502" y2="224" stroke="currentColor" stroke-width="0.75" stroke-dasharray="3 4" opacity="0.2"/>
+<line x1="572" y1="76" x2="572" y2="224" stroke="currentColor" stroke-width="0.75" stroke-dasharray="3 4" opacity="0.2"/>
+<path d="M376 126 H432" fill="none" stroke="#BA7517" stroke-width="3" stroke-linecap="round"/>
+<path d="M432 126 L638 210" fill="none" stroke="#0F6E56" stroke-width="3" stroke-linecap="round"/>
+<circle cx="432" cy="126" r="4" fill="#FAEEDA" stroke="#BA7517" stroke-width="1.5"/>
+<text x="404" y="146" font-size="12.5" text-anchor="middle" fill="#BA7517">梯度 0</text>
+<text x="540" y="155" font-size="12.5" text-anchor="middle" fill="#0F6E56">斜率 Âₜ &lt; 0</text>
+<line x1="432" y1="80" x2="432" y2="86" stroke="currentColor" stroke-width="1" opacity="0.6"/>
+<line x1="502" y1="80" x2="502" y2="86" stroke="currentColor" stroke-width="1" opacity="0.6"/>
+<line x1="572" y1="80" x2="572" y2="86" stroke="currentColor" stroke-width="1" opacity="0.6"/>
+<text x="432" y="103" font-size="12" text-anchor="middle" fill="currentColor" opacity="0.72">1 − ε</text>
+<text x="502" y="103" font-size="12" text-anchor="middle" fill="currentColor" opacity="0.72">1</text>
+<text x="572" y="103" font-size="12" text-anchor="middle" fill="currentColor" opacity="0.72">1 + ε</text>
+<path d="M374 263 H432" fill="none" stroke="#BA7517" stroke-width="4" stroke-linecap="round"/>
+<path d="M432 263 H640" fill="none" stroke="#0F6E56" stroke-width="4" stroke-linecap="round"/>
+<text x="403" y="284" font-size="12.5" text-anchor="middle" fill="#BA7517">裁剪区间</text>
+<text x="536" y="284" font-size="12.5" text-anchor="middle" fill="#0F6E56">可更新区间</text>
+<rect x="62" y="305" width="556" height="26" rx="8" fill="#F1EFE8" stroke="#5F5E5A" stroke-width="0.5"/>
+<text x="340" y="318" font-size="12.5" text-anchor="middle" dominant-baseline="central" fill="#2C2C2A">min 只截断让目标继续变好的越界侧；朝旧策略纠偏时仍保留梯度</text>
+</svg>
+</div>
 
 ---
 

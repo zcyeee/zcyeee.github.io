@@ -117,51 +117,79 @@ ip addr
 
 `10.0.0.0/8`、`172.16.0.0/12` 和 `192.168.0.0/16` 属于 IPv4 私有地址范围，不能直接在公网路由。因此，访问 `10.12.34.56` 的客户端通常需要位于同一局域网、同一 VPC，或者通过 VPN、专线等方式获得到该网段的路由。
 
-NAT 会在网络边界转换数据包的源地址或目标地址。需要特别区分：
-
-- **出口 NAT**：让内网主机以某个公网 IP 访问互联网；
-- **入站映射**：把发往公网 IP 和端口的流量转发给内网服务器。
-
-能够通过 `curl ifconfig.me` 看到出口公网 IP，并不意味着该公网 IP 已配置对应的入站映射，也不代表服务器可被互联网主动访问。
+NAT 会在网络边界转换数据包的源地址或目标地址。出口 NAT 允许内网主机主动访问互联网；公网主动访问内网服务则需要单独的公网地址与端口映射。因而 `curl ifconfig.me` 只能证明当前出口地址，不能证明服务器可被互联网主动连接。
 
 ---
 
 # 三、两种访问路径
 
+<div style="overflow-x:auto">
+<svg width="100%" style="max-width:980px;min-width:880px" viewBox="0 0 980 380" role="img">
+<title>直接访问与 SSH 端口隧道的路径对比</title>
+<desc>左侧直连路径从客户端经过路由、安全组和防火墙，到达服务器监听 Socket。右侧隧道路径中，本地浏览器访问本地网络命名空间里的 127.0.0.1:8077，流量经加密隧道到达服务器网络命名空间，再访问服务器侧的 127.0.0.1:8077；两个相同地址分别属于本地电脑和服务器。</desc>
+<defs>
+<marker id="web-access-direct-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+<path d="M2 1L8 5L2 9" fill="none" stroke="#0F6E56" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+<marker id="web-access-local-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+<path d="M2 1L8 5L2 9" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+<marker id="web-access-tunnel-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+<path d="M2 1L8 5L2 9" fill="none" stroke="#BA7517" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</marker>
+</defs>
+<rect x="10" y="36" width="450" height="314" rx="12" fill="#F1EFE8" stroke="currentColor" stroke-width="0.6" stroke-opacity="0.35"/>
+<text x="235" y="66" font-size="16" font-weight="600" text-anchor="middle" fill="currentColor">直连 · 客户端访问服务器地址</text>
+<rect x="34" y="128" width="112" height="66" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.7"/>
+<text x="90" y="151" font-size="13.5" font-weight="600" text-anchor="middle" fill="#26215C">客户端浏览器</text>
+<text x="90" y="174" font-size="12.5" text-anchor="middle" fill="#3C3489">目标 IP:8077</text>
+<rect x="172" y="106" width="138" height="110" rx="8" fill="#E6F1FB" stroke="#185FA5" stroke-width="0.7"/>
+<text x="241" y="131" font-size="13.5" font-weight="600" text-anchor="middle" fill="#042C53">网络与访问控制</text>
+<text x="241" y="155" font-size="12.5" text-anchor="middle" fill="#0C447C">路由 / 网关</text>
+<text x="241" y="176" font-size="12.5" text-anchor="middle" fill="#0C447C">安全组 / 网络 ACL</text>
+<text x="241" y="197" font-size="12.5" text-anchor="middle" fill="#0C447C">服务器防火墙</text>
+<rect x="336" y="128" width="104" height="66" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.8"/>
+<text x="388" y="151" font-size="13.5" font-weight="600" text-anchor="middle" fill="#04342C">服务器 Socket</text>
+<text x="388" y="174" font-size="12.5" text-anchor="middle" fill="#085041">目标 IP:8077</text>
+<path d="M146 161H166M310 161H330" fill="none" stroke="#0F6E56" stroke-width="1.8" marker-end="url(#web-access-direct-arrow)"/>
+<rect x="168" y="235" width="146" height="30" rx="15" fill="#FCEBEB" stroke="#A32D2D" stroke-width="0.6"/>
+<text x="241" y="250" font-size="12.5" text-anchor="middle" dominant-baseline="central" fill="#791F1F">任一环节都可能阻断</text>
+<text x="235" y="298" font-size="13" text-anchor="middle" fill="currentColor" opacity="0.72">前提：目标地址可路由、访问控制放行，</text>
+<text x="235" y="319" font-size="13" text-anchor="middle" fill="currentColor" opacity="0.72">且 Socket 监听客户端实际访问的地址与端口</text>
+<rect x="480" y="36" width="490" height="314" rx="12" fill="#F1EFE8" stroke="currentColor" stroke-width="0.6" stroke-opacity="0.35"/>
+<text x="725" y="66" font-size="16" font-weight="600" text-anchor="middle" fill="currentColor">SSH / IDE 隧道 · 跨命名空间转发</text>
+<rect x="500" y="86" width="190" height="254" rx="10" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="5 5" stroke-opacity="0.45"/>
+<text x="595" y="111" font-size="13.5" font-weight="600" text-anchor="middle" fill="currentColor">本地电脑网络命名空间</text>
+<rect x="520" y="130" width="150" height="44" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.7"/>
+<text x="595" y="152" font-size="13.5" text-anchor="middle" dominant-baseline="central" fill="#26215C">本地浏览器</text>
+<path d="M595 174V194" fill="none" stroke="currentColor" stroke-width="1.5" stroke-opacity="0.7" marker-end="url(#web-access-local-arrow)"/>
+<rect x="520" y="200" width="150" height="58" rx="8" fill="#FAEEDA" stroke="#BA7517" stroke-width="0.8"/>
+<text x="595" y="221" font-size="13.5" font-weight="600" text-anchor="middle" fill="#633806">127.0.0.1:8077</text>
+<text x="595" y="242" font-size="12.5" text-anchor="middle" fill="#854F0B">本地隧道入口</text>
+<rect x="760" y="86" width="190" height="254" rx="10" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="5 5" stroke-opacity="0.45"/>
+<text x="855" y="111" font-size="13.5" font-weight="600" text-anchor="middle" fill="currentColor">服务器网络命名空间</text>
+<rect x="780" y="200" width="150" height="58" rx="8" fill="#FAEEDA" stroke="#BA7517" stroke-width="0.8"/>
+<text x="855" y="221" font-size="13.5" font-weight="600" text-anchor="middle" fill="#633806">SSH 转发进程</text>
+<text x="855" y="242" font-size="12.5" text-anchor="middle" fill="#854F0B">服务器侧隧道出口</text>
+<path d="M670 229H774" fill="none" stroke="#BA7517" stroke-width="2" marker-end="url(#web-access-tunnel-arrow)"/>
+<text x="722" y="215" font-size="12.5" text-anchor="middle" fill="#854F0B">加密隧道</text>
+<path d="M855 258V272" fill="none" stroke="currentColor" stroke-width="1.5" stroke-opacity="0.7" marker-end="url(#web-access-local-arrow)"/>
+<rect x="780" y="278" width="150" height="58" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.8"/>
+<text x="855" y="299" font-size="13.5" font-weight="600" text-anchor="middle" fill="#04342C">127.0.0.1:8077</text>
+<text x="855" y="320" font-size="12.5" text-anchor="middle" fill="#085041">服务器 Socket</text>
+<text x="725" y="370" font-size="13" text-anchor="middle" fill="#BA7517">两个相同的回环地址属于不同网络命名空间，并不是同一个端点</text>
+</svg>
+</div>
+
 ## 1. 其他主机直接访问
 
-其他主机直接访问 `http://10.12.34.56:8077` 时，数据大致经过：
-
-```text
-[客户端浏览器]
-      │ 目标 10.12.34.56:8077
-      ▼
-[本机路由与网关] → [中间网络 / VPC] → [云安全组 / 网络 ACL]
-                                            │
-                                            ▼
-                                      [服务器防火墙]
-                                            │
-                                            ▼
-                                    [监听 Socket / Web 服务]
-```
-
-这条链路要求目标地址可路由、沿途访问控制允许 TCP 连接，并且服务器确实在客户端访问的目标地址和端口上监听。
+其他主机直接访问 `http://10.12.34.56:8077` 时，浏览器把该内网地址作为真实连接目标。如图左侧所示，这要求目标地址可路由、沿途访问控制允许 TCP 连接，并且服务器确实在客户端访问的地址和端口上监听。
 
 ## 2. 本地访问：端口转发隧道
 
 通过 VSCode Remote、SSH 等远程开发工具访问服务器上的本地服务时，通常依赖**端口转发（port forwarding / SSH 隧道）**。
 
-链路如下：
-
-```
-[本地浏览器]              [SSH/IDE 加密隧道]           [服务器]
-127.0.0.1:8077  ──隧道──>  转发  ──隧道──>  127.0.0.1:8077 (Python 服务)
-```
-
-- 本地的 `127.0.0.1:8077` 实际是隧道入口，流量经隧道转发至服务器；
-- 这**并非**本地电脑直连服务器的公网端口；
-- 该隧道属于当前远程连接会话，其他主机默认不可复用；
-- 断开远程连接后，本地端口转发随之失效。
+如图右侧所示，本地的 `127.0.0.1:8077` 是隧道入口，并非服务器的公网端口；隧道通常只属于当前远程会话，其他主机默认不可复用，连接断开后转发也随之失效。
 
 对应的 SSH 本地端口转发命令可以写成：
 
@@ -169,14 +197,14 @@ NAT 会在网络边界转换数据包的源地址或目标地址。需要特别�
 ssh -L 8077:127.0.0.1:8077 user@server
 ```
 
-第一个 `8077` 是本地隧道入口，`127.0.0.1:8077` 则是从服务器一侧访问的目标。两处 `127.0.0.1` 分别属于本地电脑和远程服务器，虽然地址相同，却位于不同的网络命名空间中。
+第一个 `8077` 是本地监听端口，后面的 `127.0.0.1:8077` 则是从服务器一侧解释和访问的目标。两处回环地址文字相同，却分别属于本地电脑与远程服务器的网络命名空间。
 
 ## 3. 两种路径的关键区别
 
 其他主机能否访问服务，取决于监听地址与网络策略：
 
 - **情况 A（默认 `127.0.0.1`，依赖隧道）**：其他主机**无法访问**。服务仅监听服务器回环地址，本地访问依赖当前会话的端口转发隧道，而其他主机不存在该隧道。
-- **情况 B（`0.0.0.0` 且端口放行）**：其他主机**可以访问**，前提需呀保证网络可达（同内网能路由到 `10.12.34.56`），以及防火墙与安全组已放行 8077 端口。
+- **情况 B（`0.0.0.0` 且端口放行）**：其他主机**可以访问**，前提需要保证网络可达（同内网能路由到 `10.12.34.56`），以及防火墙与安全组已放行 8077 端口。
 
 判断当前监听状态：
 
