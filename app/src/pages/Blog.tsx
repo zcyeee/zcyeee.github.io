@@ -130,7 +130,7 @@ export function Blog() {
             </motion.div>
             <h1 className="text-2xl md:text-3xl font-bold mb-3">博客文章</h1>
             <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
-              学习记录与文章分享，链接更多的人
+              学习记录与文章分享，链接更大的世界
             </p>
           </AnimatedSection>
         </div>

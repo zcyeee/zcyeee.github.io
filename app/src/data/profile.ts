@@ -86,7 +86,7 @@ export const projects: Project[] = [
   {
     name: "EastMoney Crawler · 东方财富股吧爬虫",
     date: "开源项目   2024",
-    stars: 197,
+    stars: 207,
     description: "开源的东方财富股吧数据采集工具，支持多线程并发爬取帖子与评论信息并持久化至 MongoDB。采用 Selenium + stealth.js 规避反爬检测；以 MVC 模式解耦爬虫（PostCrawler / CommentCrawler）、解析器与数据库接口（MongoAPI），支持 post_id 关联查询，适用于量化研究与舆情分析。",
     technologies: ["Selenium", "MongoDB", "多线程", "MVC架构"],
     github: "https://github.com/zcyeee/EastMoney_Crawler",
@@ -113,9 +113,8 @@ export const awards: Award[] = [
 ];
 
 export const skills: string[] = [
-  // "熟悉 Python、PyTorch，掌握 Slurm、Linux、Shell、Git 等开发与任务调度环境",
-  "熟悉 PPO，GRPO，DAPO 等强化学习算法，具有 RL 多卡分布式训练经验，熟悉 Verl 强化学习框架",
-  "熟悉 OpenClaw，Skill，Memory 等 LLM 应用技术，了解 LangChain 以及 LLM 基础原理及应用",
+  "熟悉 PPO，GRPO 等强化学习算法，具有 SFT、Agentic RL 等后训练经验，熟悉 VeRL 强化学习框架",
+  "熟悉 Memory，Skill，自进化等 Agent 应用技术，了解 LangChain 以及 LLM 基础原理及应用",
   "熟悉 SQL 和 LaTeX，掌握 Python 数据分析与可视化，了解 Tableau 等工具",
 ];
 

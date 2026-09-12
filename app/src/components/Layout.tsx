@@ -5,6 +5,7 @@ import { Home, BookOpen, Camera, Archive } from 'lucide-react';
 import { siteConfig } from '@/data/siteConfig';
 import { isReactSnapPrerender } from '@/lib/prerender';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { getPostBySlug } from '@/content/posts-loader';
 
 const iconMap: Record<string, React.ElementType> = {
   Home,
@@ -25,6 +26,23 @@ interface LayoutProps {
 export function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const currentPath = useMemo(() => normalizePath(location.pathname), [location.pathname]);
+  const activeNavPath = currentPath.startsWith('/blog/') ? '/blog' : currentPath;
+  const articleTitle = useMemo(() => {
+    const slug = currentPath.match(/^\/blog\/([^/]+)$/)?.[1];
+    if (!slug) return null;
+
+    try {
+      return getPostBySlug(decodeURIComponent(slug))?.title ?? null;
+    } catch {
+      return null;
+    }
+  }, [currentPath]);
+  const blogNavTarget = useMemo(() => {
+    if (!currentPath.startsWith('/blog/')) return '/blog';
+
+    const page = Number(new URLSearchParams(location.search).get('page'));
+    return Number.isInteger(page) && page > 1 ? `/blog?page=${page}` : '/blog';
+  }, [currentPath, location.search]);
   /** react-snap 拍快照时：UA 为 ReactSnap，只输出静态壳 */
   const isSnap = isReactSnapPrerender();
   /** 真实浏览器 hydration 首帧须与快照 DOM 一致（内层为 div），再启用 framer-motion */
@@ -46,6 +64,7 @@ export function Layout({ children }: LayoutProps) {
   });
   const [indicatorDuration, setIndicatorDuration] = useState(0);
   const [isIndicatorReady, setIsIndicatorReady] = useState(false);
+  const [showArticleTitle, setShowArticleTitle] = useState(false);
 
   useEffect(() => {
     const restorePage = sessionStorage.getItem('blogScrollRestorePage');
@@ -54,6 +73,59 @@ export function Layout({ children }: LayoutProps) {
     if (location.pathname === '/archive' && restoreArchive) return;
     window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, [location.pathname]);
+
+  useEffect(() => {
+    const desktopQuery = window.matchMedia('(min-width: 768px)');
+    let lastScrollY = window.scrollY;
+    let accumulatedDelta = 0;
+    let animationFrame = 0;
+
+    const resetTitle = () => {
+      lastScrollY = window.scrollY;
+      accumulatedDelta = 0;
+      setShowArticleTitle(false);
+    };
+
+    const updateFromScroll = () => {
+      animationFrame = 0;
+      const nextScrollY = window.scrollY;
+      const delta = nextScrollY - lastScrollY;
+      lastScrollY = nextScrollY;
+
+      if (!articleTitle || !desktopQuery.matches || nextScrollY <= 32) {
+        accumulatedDelta = 0;
+        setShowArticleTitle(false);
+        return;
+      }
+
+      if (delta === 0) return;
+      if (Math.sign(delta) !== Math.sign(accumulatedDelta)) {
+        accumulatedDelta = delta;
+      } else {
+        accumulatedDelta += delta;
+      }
+
+      // A small threshold prevents trackpad noise from repeatedly swapping the header.
+      if (Math.abs(accumulatedDelta) < 10) return;
+      setShowArticleTitle(accumulatedDelta > 0);
+      accumulatedDelta = 0;
+    };
+
+    const handleScroll = () => {
+      if (animationFrame !== 0) return;
+      animationFrame = window.requestAnimationFrame(updateFromScroll);
+    };
+
+    resetTitle();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    desktopQuery.addEventListener('change', resetTitle);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      desktopQuery.removeEventListener('change', resetTitle);
+      if (animationFrame !== 0) window.cancelAnimationFrame(animationFrame);
+    };
+  }, [articleTitle]);
 
   const enableNavMotionOnce = useCallback(() => {
     if (hasEnabledNavMotionRef.current) return;
@@ -106,7 +178,7 @@ export function Layout({ children }: LayoutProps) {
 
   const updateIndicator = useCallback(() => {
     const navContainer = navContainerRef.current;
-    const activeLink = navLinkRefs.current[currentPath];
+    const activeLink = navLinkRefs.current[activeNavPath];
     if (!navContainer || !activeLink) return;
 
     const containerRect = navContainer.getBoundingClientRect();
@@ -119,7 +191,7 @@ export function Layout({ children }: LayoutProps) {
     const prevCenter = lastIndicatorCenterRef.current;
     const isNavigation =
       lastPositionedPathRef.current !== null &&
-      lastPositionedPathRef.current !== currentPath;
+      lastPositionedPathRef.current !== activeNavPath;
 
     if (isNavigation && prevCenter !== null) {
       const distance = Math.abs(nextCenter - prevCenter);
@@ -134,7 +206,7 @@ export function Layout({ children }: LayoutProps) {
     }
 
     lastIndicatorCenterRef.current = nextCenter;
-    lastPositionedPathRef.current = currentPath;
+    lastPositionedPathRef.current = activeNavPath;
 
     setIndicatorStyle({
       x: nextX,
@@ -143,7 +215,7 @@ export function Layout({ children }: LayoutProps) {
       height: nextHeight,
       isVisible: true,
     });
-  }, [currentPath, indicatorInset, indicatorMaxDuration, indicatorMinDuration, indicatorPixelsPerSecond]);
+  }, [activeNavPath, indicatorInset, indicatorMaxDuration, indicatorMinDuration, indicatorPixelsPerSecond]);
 
   useEffect(() => {
     if (isSnap || isIndicatorReady) return;
@@ -159,7 +231,7 @@ export function Layout({ children }: LayoutProps) {
       if (cancelled) return;
 
       const navContainer = navContainerRef.current;
-      const activeLink = navLinkRefs.current[currentPath];
+      const activeLink = navLinkRefs.current[activeNavPath];
       if (!navContainer || !activeLink) {
         rafId = requestAnimationFrame(waitForStablePosition);
         return;
@@ -198,7 +270,7 @@ export function Layout({ children }: LayoutProps) {
       cancelled = true;
       cancelAnimationFrame(rafId);
     };
-  }, [currentPath, indicatorInset, isIndicatorReady, isSnap, updateIndicator]);
+  }, [activeNavPath, indicatorInset, isIndicatorReady, isSnap, updateIndicator]);
 
   useLayoutEffect(() => {
     if (isSnap || !isIndicatorReady) return;
@@ -235,69 +307,91 @@ export function Layout({ children }: LayoutProps) {
         onAnimationEnd={handleHeaderAnimationEnd}
       >
         <div className="mx-4 mt-4">
-          <nav className="max-w-4xl mx-auto bg-card/75 backdrop-blur-xl rounded-full border border-border/60 shadow-lg shadow-primary/5 dark:shadow-black/25">
-            <div ref={setNavContainerNode} className="relative flex items-center justify-center gap-1 px-2 py-2">
-              {/* 指示器依赖 getBoundingClientRect：不参与 react-snap 快照，仅在真实浏览器布局就绪后挂载 */}
-              {!isSnap && isIndicatorReady && indicatorStyle.isVisible && (
-                <motion.div
-                  className="absolute left-0 top-0 rounded-full z-0 pointer-events-none bg-[hsl(var(--primary)/0.12)] shadow-sm shadow-primary/10 dark:bg-[hsl(var(--primary)/0.18)]"
-                  animate={{ x: indicatorStyle.x, y: indicatorStyle.y, width: indicatorStyle.width, height: indicatorStyle.height }}
-                  initial={false}
-                  transition={indicatorTransition}
-                />
-              )}
-              {navItems.map((item) => {
-                const isActive = item.normalizedPath === currentPath;
-                const Icon = item.icon;
-                const itemClassName = `
-                        relative flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors
-                        ${isActive
-                          ? 'text-primary'
-                          : 'text-muted-foreground hover:text-foreground'
-                        }
-                      `;
+          <nav className="max-w-4xl mx-auto bg-card/95 backdrop-blur-xl rounded-full border border-border/60 shadow-lg shadow-primary/5 dark:shadow-black/25">
+            <div ref={setNavContainerNode} className="relative grid overflow-hidden rounded-full">
+              <div
+                className={`relative col-start-1 row-start-1 flex items-center justify-center gap-1 px-2 py-2 transition-[opacity,transform] duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
+                  showArticleTitle ? '-translate-y-2 opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'
+                }`}
+                aria-hidden={showArticleTitle}
+                inert={showArticleTitle ? true : undefined}
+              >
+                {/* 指示器依赖 getBoundingClientRect：不参与 react-snap 快照，仅在真实浏览器布局就绪后挂载 */}
+                {!isSnap && isIndicatorReady && indicatorStyle.isVisible && (
+                  <motion.div
+                    className="absolute left-0 top-0 rounded-full z-0 pointer-events-none bg-[hsl(var(--primary)/0.12)] shadow-sm shadow-primary/10 dark:bg-[hsl(var(--primary)/0.18)]"
+                    animate={{ x: indicatorStyle.x, y: indicatorStyle.y, width: indicatorStyle.width, height: indicatorStyle.height }}
+                    initial={false}
+                    transition={indicatorTransition}
+                  />
+                )}
+                {navItems.map((item) => {
+                  const isActive = item.normalizedPath === activeNavPath;
+                  const Icon = item.icon;
+                  const itemClassName = `
+                          relative flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors
+                          ${isActive
+                            ? 'text-primary'
+                            : 'text-muted-foreground hover:text-foreground'
+                          }
+                        `;
 
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    ref={(node) => {
-                      navLinkRefs.current[item.normalizedPath] = node;
-                    }}
-                    className="relative block"
-                  >
-                    {!enableNavMotion ? (
-                      <div className={itemClassName}>
-                        {showStaticActiveIndicator && isActive && (
-                          <span
-                            aria-hidden="true"
-                            className="absolute inset-0 rounded-full z-0 pointer-events-none bg-[hsl(var(--primary)/0.12)] shadow-sm shadow-primary/10 dark:bg-[hsl(var(--primary)/0.18)]"
-                          />
-                        )}
-                        <Icon className="w-4 h-4 relative z-10" />
-                        <span className="relative z-10">{item.label}</span>
-                      </div>
-                    ) : (
-                      <motion.div
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        transition={hoverTransition}
-                        className={itemClassName}
-                      >
-                        {showStaticActiveIndicator && isActive && (
-                          <span
-                            aria-hidden="true"
-                            className="absolute inset-0 rounded-full z-0 pointer-events-none bg-[hsl(var(--primary)/0.12)] shadow-sm shadow-primary/10 dark:bg-[hsl(var(--primary)/0.18)]"
-                          />
-                        )}
-                        <Icon className="w-4 h-4 relative z-10" />
-                        <span className="relative z-10">{item.label}</span>
-                      </motion.div>
-                    )}
-                  </Link>
-                );
-              })}
-              <ThemeToggle />
+                  return (
+                    <Link
+                      key={item.path}
+                      to={item.normalizedPath === '/blog' ? blogNavTarget : item.path}
+                      ref={(node) => {
+                        navLinkRefs.current[item.normalizedPath] = node;
+                      }}
+                      className="relative block"
+                    >
+                      {!enableNavMotion ? (
+                        <div className={itemClassName}>
+                          {showStaticActiveIndicator && isActive && (
+                            <span
+                              aria-hidden="true"
+                              className="absolute inset-0 rounded-full z-0 pointer-events-none bg-[hsl(var(--primary)/0.12)] shadow-sm shadow-primary/10 dark:bg-[hsl(var(--primary)/0.18)]"
+                            />
+                          )}
+                          <Icon className="w-4 h-4 relative z-10" />
+                          <span className="relative z-10">{item.label}</span>
+                        </div>
+                      ) : (
+                        <motion.div
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          transition={hoverTransition}
+                          className={itemClassName}
+                        >
+                          {showStaticActiveIndicator && isActive && (
+                            <span
+                              aria-hidden="true"
+                              className="absolute inset-0 rounded-full z-0 pointer-events-none bg-[hsl(var(--primary)/0.12)] shadow-sm shadow-primary/10 dark:bg-[hsl(var(--primary)/0.18)]"
+                            />
+                          )}
+                          <Icon className="w-4 h-4 relative z-10" />
+                          <span className="relative z-10">{item.label}</span>
+                        </motion.div>
+                      )}
+                    </Link>
+                  );
+                })}
+                <ThemeToggle />
+              </div>
+
+              {articleTitle && (
+                <div
+                  className={`col-start-1 row-start-1 flex min-w-0 items-center justify-center gap-2 px-6 py-2 text-sm font-semibold transition-[opacity,transform] duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none md:text-[15px] ${
+                    showArticleTitle
+                      ? 'translate-y-0 opacity-100'
+                      : 'translate-y-2 opacity-0 pointer-events-none'
+                  }`}
+                  aria-hidden={!showArticleTitle}
+                >
+                  <BookOpen className="h-4 w-4 shrink-0 text-primary" />
+                  <span className="truncate">{articleTitle}</span>
+                </div>
+              )}
             </div>
           </nav>
         </div>
