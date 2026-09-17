@@ -1,5 +1,5 @@
 import { useParams, Link, useSearchParams } from 'react-router-dom';
-import { Calendar, Clock, ArrowLeft, Share2, Bookmark, Loader2 } from 'lucide-react';
+import { Calendar, Clock, ArrowLeft, Share2, Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -138,12 +138,8 @@ export function BlogPost() {
 
                     {/* Actions — shown immediately, don't wait for content */}
                     <AnimatedSection delay={0.3}>
-                        <div className="flex items-center justify-between mt-8 pt-6 border-t">
-                            <div className="flex gap-2">
-                                <Button variant="outline" size="sm" className="gap-1">
-                                    <Bookmark className="w-4 h-4" />
-                                    收藏
-                                </Button>
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mt-8 pt-6 border-t">
+                            <div className="flex gap-2 flex-shrink-0">
                                 <Button
                                     variant="outline"
                                     size="sm"
@@ -160,7 +156,7 @@ export function BlogPost() {
                                     分享
                                 </Button>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex flex-wrap gap-2 min-w-0 sm:justify-end">
                                 {post.tags.map((tag) => (
                                     <Badge key={tag} variant="secondary">{tag}</Badge>
                                 ))}
