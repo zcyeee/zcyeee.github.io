@@ -1,7 +1,7 @@
 ---
 title: "强化学习基础：从 MDP 到 LLM RL"
 date: "2025-08-19"
-tags: ["强化学习", "MDP", "价值函数", "Actor-Critic", "LLM RL"]
+tags: ["强化学习", "MDP", "Actor-Critic"]
 category: "强化学习"
 excerpt: "MDP、价值函数与策略优化构成强化学习的基本框架，value-based、policy-based、actor-critic 三类方法则对应不同的求解思路。"
 ---
