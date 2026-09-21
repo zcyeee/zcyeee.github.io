@@ -24,7 +24,7 @@ function stop(child) {
  * Returns an origin serving the site, starting a Vite dev server when needed.
  * A server we started is ours to stop; an existing one is left running.
  */
-export async function ensureSite({ appDir, port, origin, log = () => {} }) {
+export async function ensureSite({ siteDir, port, origin, log = () => {} }) {
     if (origin) {
         if (!(await isUp(origin))) throw new Error(`无法访问 --origin ${origin}`);
         return { origin, stop: async () => {} };
@@ -36,9 +36,9 @@ export async function ensureSite({ appDir, port, origin, log = () => {} }) {
         return { origin: url, stop: async () => {} };
     }
 
-    const vite = path.join(appDir, 'node_modules/.bin/vite');
+    const vite = path.join(siteDir, 'node_modules/.bin/vite');
     const child = spawn(vite, ['--port', String(port), '--strictPort'], {
-        cwd: appDir,
+        cwd: siteDir,
         detached: true,
         stdio: ['ignore', 'pipe', 'pipe'],
     });

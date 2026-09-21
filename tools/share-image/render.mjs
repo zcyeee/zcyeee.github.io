@@ -17,8 +17,8 @@ import { planPages } from './lib/split.mjs';
 
 const execFileAsync = promisify(execFile);
 const HERE = path.dirname(fileURLToPath(import.meta.url));
-const APP_DIR = path.resolve(HERE, '../../app');
-const POSTS_DIR = path.join(APP_DIR, 'src/content/posts');
+const SITE_DIR = path.resolve(HERE, '../../site');
+const POSTS_DIR = path.join(SITE_DIR, 'src/content/posts');
 
 const DEFAULTS = {
     width: 480,          // CSS px; drives text size relative to the image
@@ -113,7 +113,7 @@ async function renderPost(options) {
     const outDir = path.resolve(options.out ?? path.join(HERE, 'out', slug));
     await fs.mkdir(outDir, { recursive: true });
 
-    const site = await ensureSite({ appDir: APP_DIR, port: options.port, origin: options.origin, log: console.log });
+    const site = await ensureSite({ siteDir: SITE_DIR, port: options.port, origin: options.origin, log: console.log });
     const browser = await puppeteer.launch({
         executablePath: await findChrome(),
         headless: true,
