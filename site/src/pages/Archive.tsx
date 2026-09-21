@@ -8,6 +8,7 @@ import { Link } from 'react-router-dom';
 import { buildArchiveData, buildCategoryStats, sortedPosts } from '@/content/posts-loader';
 import { useEffect, useRef, useState } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useSeo } from '@/hooks/use-seo';
 
 const archiveData = buildArchiveData();
 const categoryStats = buildCategoryStats();
@@ -42,6 +43,7 @@ function getVisibleArchiveData(limit: number) {
 }
 
 export function Archive() {
+  useSeo({ title: '归档', description: '按时间与分类浏览全部文章。', path: '/archive' });
   const isMobile = useIsMobile();
   const skipEntry = useSkipEntryAnimation();
   const totalPosts = sortedPosts.length;

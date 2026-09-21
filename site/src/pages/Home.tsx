@@ -7,8 +7,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { AnimatedSection, ScaleOnHover } from '@/components/AnimatedSection';
 import { useSkipEntryAnimation } from '@/hooks/use-skip-entry-animation';
 import { useState } from 'react';
+import { useSeo } from '@/hooks/use-seo';
 
 export function Home() {
+  useSeo({ description: personalInfo.bio, path: '/' });
   const [wechatOpen, setWechatOpen] = useState(false);
   const skipEntry = useSkipEntryAnimation();
   /** 首屏改用 CSS 入场：class 与 delay 随快照一起落地，首帧即播且不依赖 JS；

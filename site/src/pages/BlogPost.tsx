@@ -8,6 +8,7 @@ import { AnimatedSection } from '@/components/AnimatedSection';
 import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 import { getPostBySlug, sortedPosts } from '@/content/posts-loader';
 import { useState, useEffect, useMemo } from 'react';
+import { useSeo } from '@/hooks/use-seo';
 
 export function BlogPost() {
     const [searchParams] = useSearchParams();
@@ -55,6 +56,20 @@ export function BlogPost() {
             cancelled = true;
         };
     }, [post, slug, syncContent]);
+
+    // 必须在下面的 404 提前返回之前调用，否则会违反 hooks 调用顺序
+    useSeo(
+        post
+            ? {
+                title: post.title,
+                description: post.excerpt,
+                path: `/blog/${post.slug}`,
+                type: 'article',
+                publishedTime: post.date,
+                tags: post.tags,
+            }
+            : { title: '文章未找到', path: slug ? `/blog/${slug}` : '/blog' }
+    );
 
     // Related posts: same category, exclude current, up to 3
     const relatedPosts = post

@@ -3,6 +3,7 @@ import { Calendar, Camera, MapPin, Maximize2, X } from 'lucide-react';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { photos, categories, type Photo } from '@/data/gallery';
+import { useSeo } from '@/hooks/use-seo';
 import {
   Dialog,
   DialogClose,
@@ -85,6 +86,7 @@ function getPreviewSrc(photo: Photo) {
 }
 
 export function Gallery() {
+  useSeo({ title: '摄影', description: '旅行与日常的摄影记录。', path: '/gallery' });
   const [gridWidth, setGridWidth] = useState(ASSUMED_GRID_WIDTH);
   const [selectedCategory, setSelectedCategory] = useState('全部');
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);

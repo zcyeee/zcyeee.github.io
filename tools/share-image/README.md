@@ -7,7 +7,7 @@
 ## 环境准备（只需一次）
 
 - macOS + Node 20 以上，安装有 Google Chrome（也支持 Chromium / Edge，或用 `CHROME_PATH` 指定）
-- `app/` 已执行过 `npm install`（脚本会调用其中的 vite 启动本地站点）
+- `site/` 已执行过 `npm install`（脚本会调用其中的 vite 启动本地站点）
 - 安装本工具依赖：
 
 ```bash
@@ -117,6 +117,6 @@ out/<slug>/
 
 **提示「第 N 张滚动被截断」**：页面底部占位不足，把 `lib/browser-page.mjs` 里 `#__share_spacer` 的高度调大即可。
 
-**新写的文章渲染不出来**：确认 `app/src/content/posts/<slug>.md` 存在且 frontmatter 里有 `title` 和 `date`，再用 `--list` 核对 slug。
+**新写的文章渲染不出来**：确认 `site/src/content/posts/<slug>.md` 存在且 frontmatter 里有 `title` 和 `date`，再用 `--list` 核对 slug。
 
 **只适用于 macOS**：缩略图用了系统自带的 `sips`，Chrome 路径也按 macOS 约定查找；在其他系统上加 `--no-preview` 并设置 `CHROME_PATH` 即可。
