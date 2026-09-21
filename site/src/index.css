@@ -170,3 +170,89 @@ pre[data-block-style="display"] code.hljs {
 .nav-slide-down {
   animation: navSlideDown 0.6s cubic-bezier(0.25, 0.1, 0.25, 1) both;
 }
+
+/* 首屏入场动画。
+   预渲染页面在 JS 执行前就已经把内容画出来了，所以入场状态必须由 CSS 提供、
+   并随 class 一起写进快照：浏览器解析到首帧就能起播，既不等 1.8MB 的 bundle，
+   hydration 时 DOM 也完全一致，不会出现「先显示再缩回去重播」的闪烁。
+   framer-motion 只负责 hydration 之后（客户端路由切换）的入场与滚动揭示。
+   animation-delay 由组件以内联样式给出；both 让元素在延迟期间保持起始态。 */
+@keyframes enterUp {
+  from { opacity: 0; transform: translateY(60px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes enterDown {
+  from { opacity: 0; transform: translateY(-60px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes enterLeft {
+  from { opacity: 0; transform: translateX(60px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes enterRight {
+  from { opacity: 0; transform: translateX(-60px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes enterScale {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: none; }
+}
+
+.enter-up,
+.enter-down,
+.enter-left,
+.enter-right,
+.enter-none {
+  animation-duration: 0.7s;
+  animation-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
+  /* backwards 而非 both：延迟期间保持起始态，但动画结束后把样式交还给元素本身。
+     用 both 会让最后一帧的 transform 永久生效，盖掉之后 framer-motion 的 hover 位移。 */
+  animation-fill-mode: backwards;
+}
+
+.enter-up { animation-name: enterUp; }
+.enter-down { animation-name: enterDown; }
+.enter-left { animation-name: enterLeft; }
+.enter-right { animation-name: enterRight; }
+.enter-none { animation-name: enterScale; }
+
+/* 首页/归档页里若干直接使用 motion.* 的元素，位移幅度比 AnimatedSection 小得多，
+   单独给一组短距离的入场，避免套用 60px 显得突兀。 */
+@keyframes enterUpSm {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes enterRightSm {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes enterPop {
+  from { opacity: 0; transform: scale(0.5); }
+  to { opacity: 1; transform: none; }
+}
+
+.enter-up-sm,
+.enter-right-sm,
+.enter-pop {
+  animation-duration: 0.6s;
+  animation-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
+  animation-fill-mode: backwards;
+}
+
+.enter-up-sm { animation-name: enterUpSm; }
+.enter-right-sm { animation-name: enterRightSm; }
+.enter-pop { animation-name: enterPop; animation-duration: 0.8s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-slide-down,
+  .enter-up,
+  .enter-down,
+  .enter-left,
+  .enter-right,
+  .enter-none,
+  .enter-up-sm,
+  .enter-right-sm,
+  .enter-pop {
+    animation: none;
+  }
+}

@@ -4,6 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Home, BookOpen, Camera, Archive } from 'lucide-react';
 import { siteConfig } from '@/data/siteConfig';
 import { isReactSnapPrerender } from '@/lib/prerender';
+import { useSkipEntryAnimation } from '@/hooks/use-skip-entry-animation';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { getPostBySlug } from '@/content/posts-loader';
 
@@ -45,6 +46,8 @@ export function Layout({ children }: LayoutProps) {
   }, [currentPath, location.search]);
   /** react-snap 拍快照时：UA 为 ReactSnap，只输出静态壳 */
   const isSnap = isReactSnapPrerender();
+  /** 首屏不重播入场动画，避免快照已画好的导航栏又滑入一次 */
+  const skipEntry = useSkipEntryAnimation();
   /** 真实浏览器 hydration 首帧须与快照 DOM 一致（内层为 div），再启用 framer-motion */
   const [enableNavMotion, setEnableNavMotion] = useState(false);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -149,13 +152,22 @@ export function Layout({ children }: LayoutProps) {
     if (isSnap || hasTriggeredNavEnterRef.current) return;
 
     hasTriggeredNavEnterRef.current = true;
+
+    // 首屏的 nav-slide-down 是随快照一起渲染的，首帧就已经在播，不需要（也不能）
+    // 等 hydration 再挂一次。动画可能在 JS 就绪前就放完，animationend 收不到，
+    // 所以这里直接启用交互动画，不走 animationend 那条路径。
+    if (skipEntry) {
+      enableNavMotionOnce();
+      return;
+    }
+
     setIsHydrated(true);
 
     // 移动端偶发 animationend 丢失时，仍在入场结束后开启交互动画。
     navMotionFallbackTimerRef.current = window.setTimeout(() => {
       enableNavMotionOnce();
     }, 700);
-  }, [enableNavMotionOnce, isSnap]);
+  }, [enableNavMotionOnce, isSnap, skipEntry]);
 
   const handleHeaderAnimationEnd = useCallback((event: React.AnimationEvent<HTMLElement>) => {
     if (event.target !== event.currentTarget || event.animationName !== 'navSlideDown') return;
@@ -303,7 +315,7 @@ export function Layout({ children }: LayoutProps) {
         react-remove-scroll exposes the removed width for exactly this compensation.
       */}
       <header
-        className={`fixed top-0 left-0 right-0 z-50 pr-[var(--removed-body-scroll-bar-size,0px)] ${isHydrated ? 'nav-slide-down' : ''}`}
+        className={`fixed top-0 left-0 right-0 z-50 pr-[var(--removed-body-scroll-bar-size,0px)] ${skipEntry || isHydrated ? 'nav-slide-down' : ''}`}
         onAnimationEnd={handleHeaderAnimationEnd}
       >
         <div className="mx-4 mt-4">

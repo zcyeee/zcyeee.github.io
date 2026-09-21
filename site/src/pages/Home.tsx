@@ -11,8 +11,11 @@ import { useState } from 'react';
 export function Home() {
   const [wechatOpen, setWechatOpen] = useState(false);
   const skipEntry = useSkipEntryAnimation();
-  /** 首屏时返回 false，让 framer-motion 直接渲染成 animate 的目标态，不重播入场 */
+  /** 首屏改用 CSS 入场：class 与 delay 随快照一起落地，首帧即播且不依赖 JS；
+   *  hydration 之后（客户端路由切换）仍交给 framer-motion。 */
   const entry = <T,>(from: T): T | false => (skipEntry ? false : from);
+  const entryCls = (cls: string) => (skipEntry ? ` ${cls}` : '');
+  const entryDelay = (seconds: number) => (skipEntry ? { animationDelay: `${seconds}s` } : undefined);
   const awardListVariants = {
     hidden: { opacity: 1 },
     show: {
@@ -70,7 +73,8 @@ export function Home() {
                 initial={entry({ opacity: 0, scale: 0.5 })}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
-                className="relative justify-self-center md:justify-self-start"
+                className={`relative justify-self-center md:justify-self-start${entryCls('enter-pop')}`}
+                style={entryDelay(0.0)}
               >
                 <div className="w-28 h-28 md:w-32 md:h-32 lg:w-40 lg:h-40 rounded-full overflow-hidden ring-4 ring-primary/20 shadow-2xl">
                   <img
@@ -83,7 +87,8 @@ export function Home() {
                   initial={entry({ scale: 0 })}
                   animate={{ scale: 1 }}
                   transition={{ delay: 0.5, duration: 0.3 }}
-                  className="absolute -bottom-1 -right-1 w-8 h-8 md:w-9 md:h-9 lg:w-10 lg:h-10 rounded-full border border-primary/20 bg-card/90 text-primary shadow-md shadow-primary/10 backdrop-blur-sm flex items-center justify-center dark:bg-card/80"
+                  className={`absolute -bottom-1 -right-1 w-8 h-8 md:w-9 md:h-9 lg:w-10 lg:h-10 rounded-full border border-primary/20 bg-card/90 text-primary shadow-md shadow-primary/10 backdrop-blur-sm flex items-center justify-center dark:bg-card/80${entryCls('enter-pop')}`}
+                  style={entryDelay(0.5)}
                 >
                   <Sparkles className="w-4 h-4 lg:w-5 lg:h-5" />
                 </motion.div>
@@ -95,7 +100,8 @@ export function Home() {
                   initial={entry({ opacity: 0, y: 30 })}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.2 }}
-                  className="mb-1.5 font-display text-[1.75rem] font-semibold tracking-[0.08em] text-foreground/90 md:text-[2rem]"
+                  className={`mb-1.5 font-display text-[1.75rem] font-semibold tracking-[0.08em] text-foreground/90 md:text-[2rem]${entryCls('enter-up-sm')}`}
+                  style={entryDelay(0.2)}
                 >
                   {personalInfo.name}
                 </motion.h1>
@@ -104,7 +110,8 @@ export function Home() {
                   initial={entry({ opacity: 0, y: 20 })}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.3 }}
-                  className="mb-3 font-display text-sm tracking-[0.06em] text-muted-foreground md:text-[15px]"
+                  className={`mb-3 font-display text-sm tracking-[0.06em] text-muted-foreground md:text-[15px]${entryCls('enter-up-sm')}`}
+                  style={entryDelay(0.3)}
                 >
                   {personalInfo.motto}
                 </motion.p>
@@ -113,7 +120,8 @@ export function Home() {
                   initial={entry({ opacity: 0, y: 20 })}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.4 }}
-                  className="text-xs md:text-sm text-muted-foreground/80 max-w-2xl mb-4 leading-relaxed px-2 md:px-0"
+                  className={`text-xs md:text-sm text-muted-foreground/80 max-w-2xl mb-4 leading-relaxed px-2 md:px-0${entryCls('enter-up-sm')}`}
+                  style={entryDelay(0.4)}
                 >
                   {personalInfo.bio}
                 </motion.p>
@@ -123,7 +131,8 @@ export function Home() {
                   initial={entry({ opacity: 0, y: 20 })}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.5 }}
-                  className="mb-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 md:justify-start"
+                  className={`mb-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 md:justify-start${entryCls('enter-up-sm')}`}
+                  style={entryDelay(0.5)}
                 >
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground/80">
                     <MapPin className="w-3 h-3 text-primary/60" />
@@ -140,7 +149,8 @@ export function Home() {
                   initial={entry({ opacity: 0, y: 20 })}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.6 }}
-                  className="flex flex-wrap items-center justify-center md:justify-start gap-2"
+                  className={`flex flex-wrap items-center justify-center md:justify-start gap-2${entryCls('enter-up-sm')}`}
+                  style={entryDelay(0.6)}
                 >
                   {/* WeChat - desktop only, first in row */}
                   <motion.div whileHover={{ scale: 1.05, y: -2 }} transition={hoverTransition} className="hidden md:inline-flex">
@@ -206,7 +216,8 @@ export function Home() {
                   initial={entry({ opacity: 0, y: 20 })}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.7 }}
-                  className="mt-3 md:hidden"
+                  className={`mt-3 md:hidden${entryCls('enter-up-sm')}`}
+                  style={entryDelay(0.7)}
                 >
                   <motion.div whileHover={{ scale: 1.05, y: -2 }} transition={hoverTransition} className="inline-flex">
                     <Button

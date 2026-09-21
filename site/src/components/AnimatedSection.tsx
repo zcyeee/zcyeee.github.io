@@ -56,14 +56,26 @@ export function AnimatedSection({
     [hasEntered]
   );
 
+  // 首屏（含 react-snap 快照）走 CSS 入场：class 随快照一起落地，浏览器首帧即起播，
+  // 不依赖 JS，hydration 时两端 DOM 一致，因此不会闪。此处刻意不用 motion.div，
+  // 避免 framer-motion 写入的内联 style 与 CSS 动画互相干扰。
+  if (skipEntry) {
+    return (
+      <div
+        className={`enter-${direction} ${className}`}
+        style={delay ? { animationDelay: `${delay}s` } : undefined}
+      >
+        {children}
+      </div>
+    );
+  }
+
   return (
     <motion.div
       ref={setNode}
-      initial={skipEntry ? false : directionVariants[direction]}
+      initial={directionVariants[direction]}
       animate={
-        skipEntry || hasEntered || isInView
-          ? visibleState
-          : directionVariants[direction]
+        hasEntered || isInView ? visibleState : directionVariants[direction]
       }
       transition={{
         duration: 0.7,

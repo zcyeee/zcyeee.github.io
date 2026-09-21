@@ -255,7 +255,8 @@ export function Archive() {
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: (isMobile ? 0.15 : 0.3) + index * 0.05, duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
                           whileHover={{ x: 4, transition: hoverTransition }}
-                          className="flex min-w-0 items-center justify-between p-2 sm:p-2.5 rounded-lg hover:bg-muted transition-colors cursor-default"
+                          className={`flex min-w-0 items-center justify-between p-2 sm:p-2.5 rounded-lg hover:bg-muted transition-colors cursor-default${skipEntry ? ' enter-right-sm' : ''}`}
+                          style={skipEntry ? { animationDelay: `${(isMobile ? 0.15 : 0.3) + index * 0.05}s` } : undefined}
                         >
                           <span className="min-w-0 truncate text-sm font-medium">{cat.name}</span>
                           <span className="flex-shrink-0 text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full font-medium">
