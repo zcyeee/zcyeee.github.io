@@ -1,0 +1,12 @@
+{
+  "name": "share-image",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "render": "node render.mjs",
+    "list": "node render.mjs --list"
+  },
+  "dependencies": {
+    "puppeteer-core": "^23.11.1"
+  }
+}
