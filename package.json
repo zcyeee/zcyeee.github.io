@@ -1,0 +1,19 @@
+{
+  "name": "zcyeee-github-io",
+  "version": "0.0.0",
+  "private": true,
+  "description": "个人网站仓库。站点本体在 site/，离线工具在 tools/，两者是各自独立安装依赖的 npm 包。",
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "scripts": {
+    "dev": "npm --prefix site run dev",
+    "build": "npm --prefix site run build",
+    "preview": "npm --prefix site run preview",
+    "lint": "npm --prefix site run lint",
+    "install:site": "npm --prefix site install",
+    "install:tools": "npm --prefix tools/share-image install",
+    "share": "npm --prefix tools/share-image run render --",
+    "share:list": "npm --prefix tools/share-image run list"
+  }
+}
