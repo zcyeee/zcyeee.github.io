@@ -42,6 +42,14 @@ export interface PostMeta {
      * The browser caches the chunk after the first call; subsequent calls are instant.
      */
     loadContent: () => Promise<string>;
+    /**
+     * Sync — returns the body if it is already available locally, otherwise null.
+     *
+     * 预渲染出来的文章页 HTML 里已经带着完整正文，所以 hydration 的第一帧必须能同步
+     * 拿到同样的内容；否则 React 会先用 loading 占位替换掉已经画好的正文，再异步换回来，
+     * 表现为一次明显的闪烁。拿不到时返回 null，由调用方退回 loadContent()。
+     */
+    getContentSync: () => string | null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -149,6 +157,10 @@ const _allPosts: PostMeta[] = Object.entries(_eagerRaw)
                 const fullRaw = await loader();
                 return parseFrontmatter(fullRaw).content; // strip frontmatter before rendering
             },
+            // 目前 eager 扫描拿到的 `raw` 就是整篇原文，所以同步路径总能命中。
+            // 若以后让 eager 层只保留 frontmatter（真正实现按篇分包），这里会自然退化成
+            // 返回 null，调用方走异步路径，行为依旧正确。
+            getContentSync: () => (raw ? parseFrontmatter(raw).content : null),
         };
     })
     .filter((p): p is PostMeta => p !== null);

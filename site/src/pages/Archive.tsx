@@ -3,6 +3,7 @@ import { Archive as ArchiveIcon, Calendar, Tag, ChevronRight, BarChart2 } from '
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AnimatedSection, ScaleOnHover } from '@/components/AnimatedSection';
+import { useSkipEntryAnimation } from '@/hooks/use-skip-entry-animation';
 import { Link } from 'react-router-dom';
 import { buildArchiveData, buildCategoryStats, sortedPosts } from '@/content/posts-loader';
 import { useEffect, useRef, useState } from 'react';
@@ -42,6 +43,7 @@ function getVisibleArchiveData(limit: number) {
 
 export function Archive() {
   const isMobile = useIsMobile();
+  const skipEntry = useSkipEntryAnimation();
   const totalPosts = sortedPosts.length;
   const totalCategories = categoryStats.length;
   const earliestDate = sortedPosts[sortedPosts.length - 1]?.date.slice(0, 7) ?? '--';
@@ -249,7 +251,7 @@ export function Archive() {
                       {categoryStats.map((cat, index) => (
                         <motion.div
                           key={cat.name}
-                          initial={{ opacity: 0, x: -10 }}
+                          initial={skipEntry ? false : { opacity: 0, x: -10 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ delay: (isMobile ? 0.15 : 0.3) + index * 0.05, duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
                           whileHover={{ x: 4, transition: hoverTransition }}

@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 import { getPostBySlug, sortedPosts } from '@/content/posts-loader';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 
 export function BlogPost() {
     const [searchParams] = useSearchParams();
@@ -32,11 +32,13 @@ export function BlogPost() {
     // Lazy-load content only when this post is opened
     const [contentBySlug, setContentBySlug] = useState<Record<string, string>>({});
     const [loadErrors, setLoadErrors] = useState<Record<string, boolean>>({});
-    const content = slug ? contentBySlug[slug] ?? null : null;
+    // 能同步拿到正文时直接用，避免 hydration 首帧把预渲染好的正文换成 loading 占位
+    const syncContent = useMemo(() => post?.getContentSync() ?? null, [post]);
+    const content = syncContent ?? (slug ? contentBySlug[slug] ?? null : null);
     const loadError = slug ? loadErrors[slug] ?? false : false;
 
     useEffect(() => {
-        if (!post || !slug) return;
+        if (!post || !slug || syncContent !== null) return;
         let cancelled = false;
         post
             .loadContent()
@@ -52,7 +54,7 @@ export function BlogPost() {
         return () => {
             cancelled = true;
         };
-    }, [post, slug]);
+    }, [post, slug, syncContent]);
 
     // Related posts: same category, exclude current, up to 3
     const relatedPosts = post

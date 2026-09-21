@@ -1,5 +1,6 @@
 import { motion, useInView } from 'framer-motion';
 import { useCallback, useRef, useState, type ReactNode } from 'react';
+import { useSkipEntryAnimation } from '@/hooks/use-skip-entry-animation';
 
 type InViewOptions = NonNullable<Parameters<typeof useInView>[1]>;
 type InViewMargin = InViewOptions extends { margin?: infer M } ? M : undefined;
@@ -21,6 +22,8 @@ const directionVariants = {
   none: { opacity: 0, scale: 0.95 },
 };
 
+const visibleState = { x: 0, y: 0, opacity: 1, scale: 1 };
+
 export function AnimatedSection({
   children,
   className = '',
@@ -32,6 +35,7 @@ export function AnimatedSection({
   const ref = useRef<HTMLDivElement | null>(null);
   const isInView = useInView(ref, { once: true, margin, amount });
   const [hasEntered, setHasEntered] = useState(false);
+  const skipEntry = useSkipEntryAnimation();
 
   const setNode = useCallback(
     (node: HTMLDivElement | null) => {
@@ -55,10 +59,10 @@ export function AnimatedSection({
   return (
     <motion.div
       ref={setNode}
-      initial={directionVariants[direction]}
+      initial={skipEntry ? false : directionVariants[direction]}
       animate={
-        hasEntered || isInView
-          ? { x: 0, y: 0, opacity: 1, scale: 1 }
+        skipEntry || hasEntered || isInView
+          ? visibleState
           : directionVariants[direction]
       }
       transition={{

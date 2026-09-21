@@ -5,10 +5,14 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { AnimatedSection, ScaleOnHover } from '@/components/AnimatedSection';
+import { useSkipEntryAnimation } from '@/hooks/use-skip-entry-animation';
 import { useState } from 'react';
 
 export function Home() {
   const [wechatOpen, setWechatOpen] = useState(false);
+  const skipEntry = useSkipEntryAnimation();
+  /** 首屏时返回 false，让 framer-motion 直接渲染成 animate 的目标态，不重播入场 */
+  const entry = <T,>(from: T): T | false => (skipEntry ? false : from);
   const awardListVariants = {
     hidden: { opacity: 1 },
     show: {
@@ -63,7 +67,7 @@ export function Home() {
             <div className="grid grid-cols-1 items-center gap-6 md:grid-cols-[8rem_minmax(0,1fr)] md:gap-8 lg:grid-cols-[10rem_minmax(0,1fr)] lg:gap-10">
               {/* Avatar */}
               <motion.div
-                initial={{ opacity: 0, scale: 0.5 }}
+                initial={entry({ opacity: 0, scale: 0.5 })}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.8, ease: [0.25, 0.1, 0.25, 1] }}
                 className="relative justify-self-center md:justify-self-start"
@@ -76,7 +80,7 @@ export function Home() {
                   />
                 </div>
                 <motion.div
-                  initial={{ scale: 0 }}
+                  initial={entry({ scale: 0 })}
                   animate={{ scale: 1 }}
                   transition={{ delay: 0.5, duration: 0.3 }}
                   className="absolute -bottom-1 -right-1 w-8 h-8 md:w-9 md:h-9 lg:w-10 lg:h-10 rounded-full border border-primary/20 bg-card/90 text-primary shadow-md shadow-primary/10 backdrop-blur-sm flex items-center justify-center dark:bg-card/80"
@@ -88,7 +92,7 @@ export function Home() {
               {/* Info */}
               <div className="text-center md:text-left flex-1">
                 <motion.h1
-                  initial={{ opacity: 0, y: 30 }}
+                  initial={entry({ opacity: 0, y: 30 })}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.2 }}
                   className="mb-1.5 font-display text-[1.75rem] font-semibold tracking-[0.08em] text-foreground/90 md:text-[2rem]"
@@ -97,7 +101,7 @@ export function Home() {
                 </motion.h1>
 
                 <motion.p
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={entry({ opacity: 0, y: 20 })}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.3 }}
                   className="mb-3 font-display text-sm tracking-[0.06em] text-muted-foreground md:text-[15px]"
@@ -106,7 +110,7 @@ export function Home() {
                 </motion.p>
 
                 <motion.p
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={entry({ opacity: 0, y: 20 })}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.4 }}
                   className="text-xs md:text-sm text-muted-foreground/80 max-w-2xl mb-4 leading-relaxed px-2 md:px-0"
@@ -116,7 +120,7 @@ export function Home() {
 
                 {/* Contact Info */}
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={entry({ opacity: 0, y: 20 })}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.5 }}
                   className="mb-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 md:justify-start"
@@ -133,7 +137,7 @@ export function Home() {
 
                 {/* Social Links - All buttons */}
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={entry({ opacity: 0, y: 20 })}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.6 }}
                   className="flex flex-wrap items-center justify-center md:justify-start gap-2"
@@ -199,7 +203,7 @@ export function Home() {
 
                 {/* WeChat - mobile only, separate row */}
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={entry({ opacity: 0, y: 20 })}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.7 }}
                   className="mt-3 md:hidden"
@@ -290,7 +294,7 @@ export function Home() {
                       {skills.map((skill, index) => (
                         <motion.li
                           key={index}
-                          initial={{ opacity: 0, x: -10 }}
+                          initial={entry({ opacity: 0, x: -10 })}
                           whileInView={{ opacity: 1, x: 0 }}
                           viewport={{ once: true }}
                           transition={{
@@ -662,7 +666,7 @@ export function Home() {
                   <motion.div
                     className="divide-y divide-border/30"
                     variants={awardListVariants}
-                    initial="hidden"
+                    initial={entry('hidden')}
                     whileInView="show"
                     viewport={{ once: true, amount: 0.2, margin: '-80px' }}
                   >
