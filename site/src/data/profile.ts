@@ -81,7 +81,7 @@ export const projects: Project[] = [
     date: "2025.07 — 2025.09",
     description: "腾讯广告算法大赛（初赛前 15%）。基于多模态用户行为序列，引入 HSTU 注意力模块与 RoPE 增强序列建模；解耦静态/动态特征编码，采用 InfoNCE + 动态难负例 Triplet Loss 双损失联合优化，两阶段训练策略对齐测评指标，核心指标由 0.023 提升至 0.086。",
     technologies: ["HSTU", "InfoNCE", "Triplet Loss", "多模态特征融合"],
-    image: "/images/project_ad_recommendation.png"
+    image: "/images/project_ad_recommendation.webp"
   },
   {
     name: "EastMoney Crawler · 东方财富股吧爬虫",
@@ -90,7 +90,7 @@ export const projects: Project[] = [
     description: "开源的东方财富股吧数据采集工具，支持多线程并发爬取帖子与评论信息并持久化至 MongoDB。采用 Selenium + stealth.js 规避反爬检测；以 MVC 模式解耦爬虫（PostCrawler / CommentCrawler）、解析器与数据库接口（MongoAPI），支持 post_id 关联查询，适用于量化研究与舆情分析。",
     technologies: ["Selenium", "MongoDB", "多线程", "MVC架构"],
     github: "https://github.com/zcyeee/EastMoney_Crawler",
-    image: "/images/project_eastmoney_crawler.png"
+    image: "/images/project_eastmoney_crawler.webp"
   }
 ];
 

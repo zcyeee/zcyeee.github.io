@@ -511,6 +511,10 @@ export function Home() {
                               src={project.image}
                               alt={project.name}
                               className="w-full h-full object-cover md:scale-110"
+                              /* 项目卡片在折叠线以下（桌面端 top≈1880px）。不加 lazy 的话这两张图
+                                 会和主 bundle 抢同一条带宽，手机端实测把可交互时间推迟了数秒。 */
+                              loading="lazy"
+                              decoding="async"
                               whileHover={{ scale: 1.05 }}
                               transition={hoverTransition}
                             />
