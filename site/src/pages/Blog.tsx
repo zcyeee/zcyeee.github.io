@@ -327,8 +327,11 @@ export function Blog() {
               </AnimatedSection>
 
               {/* Featured Post */}
+              {/* lg 以下侧边栏堆在文章列表之后，这张卡片一定是滚动进场的：触发距离跟上方
+                  文章卡片保持一致，错开延迟也收窄——原本的 0.4s 是为分类卡（lg 以下不渲染）
+                  准备的，留着会让人滑到位了还看不到动静。 */}
               {featuredPost && (
-                <AnimatedSection delay={0.4}>
+                <AnimatedSection delay={isMobile ? 0.15 : 0.4} amount={0} margin="50px">
                   <motion.div whileHover={{ y: -4 }} transition={hoverTransition}>
                     <Card className="group bg-gradient-to-br from-primary/10 via-card/90 to-accent/30 border-primary/20 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/10 transition-all duration-300 dark:from-primary/10 dark:via-card/90 dark:to-accent/20">
                       <CardContent className="p-5 flex flex-col gap-3 h-full">

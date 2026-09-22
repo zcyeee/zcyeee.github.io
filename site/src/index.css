@@ -216,6 +216,18 @@ pre[data-block-style="display"] code.hljs {
 .enter-right { animation-name: enterRight; }
 .enter-none { animation-name: enterScale; }
 
+/* CSS 入场没有视口概念：不加干预的话，屏幕外的区块也会跟着首帧一起播完，
+   等用户滚下去时早已全部显示好，第一次访问就完全看不到逐段揭示。
+   所以 hydration 之后把仍整块在视口下方的区块收回起始态 —— 那一刻它在屏幕外，
+   用户看不见这次变化 —— 滚到时再贴回 .enter-*，动画才真正播一次。
+   这些 class 只会在 hydration 之后出现，不会进快照，静态页面依旧全部可见。
+   animation: none 是为了取消已经播完的那次入场，好让 class 换回去时能重新起播。 */
+.entry-pending-up { animation: none; opacity: 0; transform: translateY(60px); }
+.entry-pending-down { animation: none; opacity: 0; transform: translateY(-60px); }
+.entry-pending-left { animation: none; opacity: 0; transform: translateX(60px); }
+.entry-pending-right { animation: none; opacity: 0; transform: translateX(-60px); }
+.entry-pending-none { animation: none; opacity: 0; transform: scale(0.95); }
+
 /* 首页/归档页里若干直接使用 motion.* 的元素，位移幅度比 AnimatedSection 小得多，
    单独给一组短距离的入场，避免套用 60px 显得突兀。 */
 @keyframes enterUpSm {
@@ -254,5 +266,17 @@ pre[data-block-style="display"] code.hljs {
   .enter-right-sm,
   .enter-pop {
     animation: none;
+  }
+
+  /* 收回起始态本身也是动效的一部分。偏好减少动态效果时 AnimatedSection 不会再贴这些
+     class，这里只是兜底：万一偏好在加载后才被打开，内容也绝不能留在不可见状态。 */
+  .entry-pending-up,
+  .entry-pending-down,
+  .entry-pending-left,
+  .entry-pending-right,
+  .entry-pending-none {
+    animation: none;
+    opacity: 1;
+    transform: none;
   }
 }
