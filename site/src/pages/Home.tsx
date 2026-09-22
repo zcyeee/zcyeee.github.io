@@ -357,12 +357,12 @@ export function Home() {
                               {edu.school}
                             </h3>
                             <span className="text-[13px] md:text-sm text-muted-foreground whitespace-nowrap mt-0.5">
-                              {edu.startDate} — {edu.endDate}
+                              {`${edu.startDate} — ${edu.endDate}`}
                             </span>
                           </div>
                           {/* Degree + field */}
                           <p className="text-sm font-medium text-foreground/60">
-                            {edu.degree} · {edu.field}
+                            {`${edu.degree} · ${edu.field}`}
                           </p>
                           {/* Department */}
                           {edu.department && (

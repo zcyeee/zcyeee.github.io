@@ -138,7 +138,7 @@ export function Archive() {
                         <span className="text-2xl font-bold text-primary">{yearData.year}</span>
                         <div className="flex-1 h-px bg-border" />
                         <span className="text-[13px] md:text-xs text-muted-foreground">
-                          {yearData.months.reduce((acc, m) => acc + m.posts.length, 0)} 篇
+                          {`${yearData.months.reduce((acc, m) => acc + m.posts.length, 0)} 篇`}
                         </span>
                       </div>
                     </AnimatedSection>
@@ -206,7 +206,7 @@ export function Archive() {
                 {hasMore ? (
                   <span className="text-xs text-muted-foreground animate-pulse">加载更多…</span>
                 ) : totalPosts > 0 ? (
-                  <span className="text-xs text-muted-foreground">— 已显示全部 {totalPosts} 篇文章 —</span>
+                  <span className="text-xs text-muted-foreground">{`— 已显示全部 ${totalPosts} 篇文章 —`}</span>
                 ) : null}
               </div>
             </div>

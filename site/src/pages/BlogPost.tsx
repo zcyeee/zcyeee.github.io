@@ -5,7 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { AnimatedSection } from '@/components/AnimatedSection';
-import { MarkdownRenderer } from '@/components/MarkdownRenderer';
+import { MarkdownRenderer, markdownRootClass, MARKDOWN_ROOT_ATTR } from '@/components/MarkdownRenderer';
+import { consumePrerenderedArticle } from '@/lib/prerendered-article';
 import { getPostBySlug, sortedPosts } from '@/content/posts-loader';
 import { useState, useEffect, useMemo } from 'react';
 import { useSeo } from '@/hooks/use-seo';
@@ -33,6 +34,8 @@ export function BlogPost() {
     // Lazy-load content only when this post is opened
     const [contentBySlug, setContentBySlug] = useState<Record<string, string>>({});
     const [loadErrors, setLoadErrors] = useState<Record<string, boolean>>({});
+    // 首屏直接复用预渲染好的正文 DOM，跳过 Markdown 解析 / KaTeX / 代码高亮的重算
+    const [prerenderedHtml] = useState(() => consumePrerenderedArticle());
     // 能同步拿到正文时直接用，避免 hydration 首帧把预渲染好的正文换成 loading 占位
     const syncContent = useMemo(() => post?.getContentSync() ?? null, [post]);
     const content = syncContent ?? (slug ? contentBySlug[slug] ?? null : null);
@@ -139,7 +142,13 @@ export function BlogPost() {
                     <AnimatedSection delay={0.2}>
                         <Card className="border-border/50 bg-card/90 shadow-md shadow-primary/5 dark:bg-card/80 dark:shadow-black/20">
                             <CardContent className="p-4 md:p-6">
-                                {loadError ? (
+                                {prerenderedHtml !== null ? (
+                                    <div
+                                        {...{ [MARKDOWN_ROOT_ATTR]: '' }}
+                                        className={`${markdownRootClass} `}
+                                        dangerouslySetInnerHTML={{ __html: prerenderedHtml }}
+                                    />
+                                ) : loadError ? (
                                     <p className="text-destructive text-sm">内容加载失败，请刷新页面重试。</p>
                                 ) : content === null ? (
                                     <div className="flex items-center justify-center py-20 text-muted-foreground">
@@ -199,7 +208,7 @@ export function BlogPost() {
                                                     <CardContent className="p-4 flex items-center justify-between">
                                                         <div>
                                                             <p className="font-medium hover:text-primary transition-colors">{related.title}</p>
-                                                            <p className="text-xs text-muted-foreground mt-1">{related.date} · {related.readTime}</p>
+                                                            <p className="text-xs text-muted-foreground mt-1">{`${related.date} · ${related.readTime}`}</p>
                                                         </div>
                                                         <Badge variant="secondary" className="ml-4 flex-shrink-0">{related.category}</Badge>
                                                     </CardContent>

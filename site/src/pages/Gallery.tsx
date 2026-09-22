@@ -4,6 +4,7 @@ import { AnimatedSection } from '@/components/AnimatedSection';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { photos, categories, type Photo } from '@/data/gallery';
 import { useSeo } from '@/hooks/use-seo';
+import { isReactSnapPrerender } from '@/lib/prerender';
 import {
   Dialog,
   DialogClose,
@@ -100,6 +101,9 @@ export function Gallery() {
   const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
+    // 同 useIsMobile：预渲染时不测量，让快照保持 ASSUMED_GRID_WIDTH 的排布，
+    // 与真实浏览器 hydration 的首帧一致，否则整页会被判定 hydration 失败而重渲染。
+    if (isReactSnapPrerender()) return;
     const node = gridRef.current;
     if (!node) return;
 
