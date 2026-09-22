@@ -87,7 +87,7 @@ function getPreviewSrc(photo: Photo) {
 }
 
 export function Gallery() {
-  useSeo({ title: '摄影', description: '旅行与日常的摄影记录。', path: '/gallery' });
+  useSeo({ title: 'Photography', description: '旅行与日常的摄影记录。', path: '/gallery' });
   const [gridWidth, setGridWidth] = useState(ASSUMED_GRID_WIDTH);
   const [selectedCategory, setSelectedCategory] = useState('全部');
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);

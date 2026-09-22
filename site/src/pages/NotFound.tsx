@@ -9,7 +9,7 @@ import { useSeo } from '@/hooks/use-seo';
  * 否则 <Routes> 会渲染 null，页面上只剩导航栏和页脚的一片空白。
  */
 export function NotFound() {
-    useSeo({ title: '页面未找到', description: '该页面不存在或已被移动。' });
+    useSeo({ title: 'Not Found', description: '该页面不存在或已被移动。' });
 
     return (
         <div className="min-h-screen pb-16 flex items-center justify-center">

@@ -30,7 +30,7 @@ import { useSeo } from '@/hooks/use-seo';
 //   .map(([tag]) => tag);
 
 export function Blog() {
-  useSeo({ title: '博客', description: '大语言模型、强化学习与工程实践的学习笔记与长文整理。', path: '/blog' });
+  useSeo({ title: 'Blog', description: '大语言模型、强化学习与工程实践的学习笔记与长文整理。', path: '/blog' });
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('全部');

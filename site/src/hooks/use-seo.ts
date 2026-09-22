@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { siteConfig } from '@/data/siteConfig';
 
 export interface SeoOptions {
-  /** 页面标题，不含站点名后缀；省略时整站标题只用 siteName */
+  /** 页面标题，直接作为 document.title；省略时退回站点名 */
   title?: string;
   description?: string;
   /** 页面路径（以 / 开头），用于 canonical 与 og:url */
@@ -48,7 +48,8 @@ export function useSeo({ title, description, path, type = 'website', publishedTi
   const tagList = tags?.join(',');
 
   useEffect(() => {
-    const fullTitle = title ? `${title} · ${siteConfig.siteName}` : siteConfig.siteName;
+    // 不接站点名后缀：标签页收窄后只剩十几个字符，留给栏目名和文章标题
+    const fullTitle = title ?? siteConfig.siteName;
     const desc = description || siteConfig.description;
     const url = `${siteConfig.siteUrl}${path ?? window.location.pathname}`;
     const image = `${siteConfig.siteUrl}${siteConfig.ogImage}`;
