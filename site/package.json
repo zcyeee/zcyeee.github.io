@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "postbuild": "react-snap && node scripts/generate-seo-files.mjs",
+    "postbuild": "react-snap && node scripts/tune-prerendered-assets.mjs && node scripts/generate-seo-files.mjs",
     "prerender": "react-snap",
     "lint": "eslint .",
     "preview": "vite preview"

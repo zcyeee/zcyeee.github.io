@@ -25,6 +25,22 @@
       })();
     </script>
     <script>
+      // 见 index.css 中 html.entry-hold 的说明
+      (() => {
+        if (navigator.userAgent === 'ReactSnap') return;
+        const root = document.documentElement;
+        root.classList.add('entry-hold');
+        const tick = () => {
+          if (document.querySelector('header') || document.readyState !== 'loading') {
+            root.classList.remove('entry-hold');
+          } else {
+            requestAnimationFrame(tick);
+          }
+        };
+        requestAnimationFrame(tick);
+      })();
+    </script>
+    <script>
       (() => {
         const redirect = sessionStorage.getItem('spa_redirect');
         if (!redirect) return;

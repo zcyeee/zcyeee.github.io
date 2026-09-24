@@ -2,16 +2,18 @@
  * Two-layer blog post loader.
  *
  * ┌─────────────────────────────────────────────────────────────────────────┐
- * │  Layer 1 – Metadata  (eager, sync, tiny)                                │
- * │  All .md files are scanned at BUILD TIME via import.meta.glob eager.    │
- * │  Only the YAML frontmatter block is kept; the body text is discarded.   │
- * │  Result: main JS bundle contains only metadata (~1-2 KB per post).      │
+ * │  Layer 1 – 元数据（eager、同步、很小）                                   │
+ * │  `*.md?frontmatter` 由构建期插件处理，只返回 YAML 头部解析后的对象，       │
+ * │  正文不进主包。每篇大约几百字节，列表页/归档页/导航栏标题都能同步取用。     │
  * │                                                                          │
- * │  Layer 2 – Content   (lazy, async, code-split)                          │
- * │  Vite creates a SEPARATE CHUNK for each .md file.                       │
- * │  Chunks are only downloaded when a user actually opens that post.       │
- * │  Subsequent visits use the browser's module cache (instant).            │
+ * │  Layer 2 – 正文（lazy、按篇一个 chunk）                                  │
+ * │  非 eager 的 `?raw` glob 让 Vite 给每个 .md 单独出块，点开哪篇下载哪篇，   │
+ * │  下载过的存进 _contentCache，之后同步命中。                               │
  * └─────────────────────────────────────────────────────────────────────────┘
+ *
+ * 分成两层的原因：eager 引入 `?raw` 会把 23 篇文章的全文钉进主包（实测 493 KB
+ * 原始体积 / 171 KB gzip），首页一个字都用不上却要全部下载并解析 —— 中端手机上
+ * 这部分解析开销正好砸在入场动画窗口里，既拖慢可交互时间，又把动效吃掉。
  *
  * TO ADD A NEW POST:
  *   1. Create `src/content/posts/<your-slug>.md`
@@ -22,12 +24,14 @@
  * ---
  * title: "Your Post Title"
  * date: "2026-01-01"
- * readTime: "10 分钟"
+ * readTime: "10 分钟"        # 省略则由构建期按字数估算
  * tags: ["Tag1", "Tag2"]
  * category: "工程知识"
  * excerpt: "A one-sentence summary shown in the post card."
  * ---
  */
+
+import { parseFrontmatter, type PostFrontmatter } from './frontmatter';
 
 export interface PostMeta {
     slug: string;
@@ -39,42 +43,16 @@ export interface PostMeta {
     category: string;
     /**
      * Async — downloads and returns the markdown body (frontmatter stripped).
-     * The browser caches the chunk after the first call; subsequent calls are instant.
+     * 下载结果会进缓存，后续调用（含 getContentSync）直接命中。
      */
     loadContent: () => Promise<string>;
     /**
-     * Sync — returns the body if it is already available locally, otherwise null.
+     * Sync — 正文已在本地时直接返回，否则返回 null。
      *
-     * 预渲染出来的文章页 HTML 里已经带着完整正文，所以 hydration 的第一帧必须能同步
-     * 拿到同样的内容；否则 React 会先用 loading 占位替换掉已经画好的正文，再异步换回来，
-     * 表现为一次明显的闪烁。拿不到时返回 null，由调用方退回 loadContent()。
+     * 只用于 Markdown 渲染路径：开发环境、react-snap 预渲染，以及线上取不到预渲染 HTML 时的回退。
+     * 线上站内切换文章走的是 lib/article-html，不经过这里。
      */
     getContentSync: () => string | null;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Lightweight YAML frontmatter parser (no external deps, handles our format)
-// ─────────────────────────────────────────────────────────────────────────────
-function parseFrontmatter(raw: string): { data: Record<string, unknown>; content: string } {
-    if (!raw.startsWith('---')) return { data: {}, content: raw };
-    const end = raw.indexOf('\n---', 3);
-    if (end === -1) return { data: {}, content: raw };
-
-    const yamlBlock = raw.slice(4, end);
-    const content = raw.slice(end + 4).replace(/^\n/, '');
-    const data: Record<string, unknown> = {};
-
-    for (const line of yamlBlock.split('\n')) {
-        const colon = line.indexOf(':');
-        if (colon === -1) continue;
-        const key = line.slice(0, colon).trim();
-        const val = line.slice(colon + 1).trim();
-        if (!key) continue;
-        data[key] = val.startsWith('[')
-            ? val.slice(1, -1).split(',').map((s) => s.trim().replace(/^["']|["']$/g, '')).filter(Boolean)
-            : val.replace(/^["']|["']$/g, '');
-    }
-    return { data, content };
 }
 
 function slugFromPath(path: string) {
@@ -82,85 +60,67 @@ function slugFromPath(path: string) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Automatic Reading Time Calculation
+// Layer 1 — 元数据（eager）。`?frontmatter` 由 plugins/markdown-frontmatter.ts
+// 处理，返回的对象里已经带着构建期算好的 readTime。
 // ─────────────────────────────────────────────────────────────────────────────
-function calculateReadTime(content: string): string {
-    // Remove markdown symbols (roughly) for a better word count
-    const text = content.replace(/[#*`~_>-]/g, '');
-
-    // Count CJK (Chinese, Japanese, Korean) characters
-    const cjkRegex = /[\u4e00-\u9fa5\u3040-\u30ff\uac00-\ud7af]/g;
-    const cjkCount = (text.match(cjkRegex) || []).length;
-
-    // Count English/Western words (alphanumeric sequences)
-    const westernRegex = /[a-zA-Z0-9]+/g;
-    const westernCount = (text.match(westernRegex) || []).length;
-
-    // Assume average reading speeds:
-    // CJK: 300 characters/minute
-    // Western: 200 words/minute
-    // Plus a baseline of ~1 minute for images/code blocks if the content is long enough
-    const cjkTime = cjkCount / 300;
-    const westernTime = westernCount / 200;
-
-    const totalMinutes = Math.max(1, Math.ceil(cjkTime + westernTime));
-    return `${totalMinutes} 分钟`;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Layer 1 — Eager metadata scan
-// Vite inlines ONLY the frontmatter strings into the main bundle because we
-// parse them here and immediately discard the body (no reference kept).
-// ─────────────────────────────────────────────────────────────────────────────
-const _eagerRaw = import.meta.glob('./posts/*.md', {
-    query: '?raw',
+const _meta = import.meta.glob('./posts/*.md', {
+    query: '?frontmatter',
     import: 'default',
     eager: true,
-}) as Record<string, string>;
+}) as Record<string, PostFrontmatter>;
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Layer 2 — Lazy content loaders (one separate Vite chunk per .md file)
-// These are NOT downloaded until `post.loadContent()` is called.
+// Layer 2 — 正文（lazy，每个 .md 一个独立 chunk），调用前不会产生任何下载
 // ─────────────────────────────────────────────────────────────────────────────
-const _lazyLoaders = import.meta.glob('./posts/*.md', {
+const _rawLoaders = import.meta.glob('./posts/*.md', {
     query: '?raw',
     import: 'default',
 }) as Record<string, () => Promise<string>>;
 
-// Build the post registry — metadata only, body text is NOT stored
-const _allPosts: PostMeta[] = Object.entries(_eagerRaw)
-    .map(([path, raw]): PostMeta | null => {
-        if (!raw || typeof raw !== 'string') return null;
+/** slug → 已剥掉 frontmatter 的正文。跨路由切换保留，所以返回同一篇时是同步的。 */
+const _contentCache = new Map<string, string>();
+/** slug → 正在进行中的请求，避免预取和真实打开重复下载同一个 chunk。 */
+const _inflight = new Map<string, Promise<string>>();
+
+function loadContentFor(slug: string, path: string): Promise<string> {
+    const cached = _contentCache.get(slug);
+    if (cached !== undefined) return Promise.resolve(cached);
+
+    const existing = _inflight.get(slug);
+    if (existing) return existing;
+
+    const loader = _rawLoaders[path];
+    const task = loader()
+        .then((fullRaw) => {
+            const { content } = parseFrontmatter(fullRaw);
+            _contentCache.set(slug, content);
+            _inflight.delete(slug);
+            return content;
+        })
+        .catch((error) => {
+            _inflight.delete(slug);
+            throw error;
+        });
+
+    _inflight.set(slug, task);
+    return task;
+}
+
+const _allPosts: PostMeta[] = Object.entries(_meta)
+    .map(([path, meta]): PostMeta | null => {
+        if (!meta || !meta.title || !meta.date) return null;
         const slug = slugFromPath(path);
-        const { data, content } = parseFrontmatter(raw); // body (`content`) intentionally not stored
 
-        const title = data.title as string | undefined;
-        const date = data.date as string | undefined;
-        if (!title || !date) return null;
-
-        // Auto-calculate read time if not provided in frontmatter
-        let readTime = data.readTime as string | undefined;
-        if (!readTime) {
-            readTime = calculateReadTime(content);
-        }
-
-        const loader = _lazyLoaders[path];
         return {
             slug,
-            title,
-            excerpt: (data.excerpt as string) ?? '',
-            date,
-            readTime,
-            tags: (data.tags as string[]) ?? [],
-            category: (data.category as string) ?? '未分类',
-            loadContent: async () => {
-                const fullRaw = await loader();
-                return parseFrontmatter(fullRaw).content; // strip frontmatter before rendering
-            },
-            // 目前 eager 扫描拿到的 `raw` 就是整篇原文，所以同步路径总能命中。
-            // 若以后让 eager 层只保留 frontmatter（真正实现按篇分包），这里会自然退化成
-            // 返回 null，调用方走异步路径，行为依旧正确。
-            getContentSync: () => (raw ? parseFrontmatter(raw).content : null),
+            title: meta.title,
+            excerpt: meta.excerpt,
+            date: meta.date,
+            readTime: meta.readTime,
+            tags: meta.tags,
+            category: meta.category,
+            loadContent: () => loadContentFor(slug, path),
+            getContentSync: () => _contentCache.get(slug) ?? null,
         };
     })
     .filter((p): p is PostMeta => p !== null);
@@ -177,6 +137,16 @@ export const sortedPosts: PostMeta[] = [..._allPosts].sort(
 /** Find a post by its URL slug */
 export function getPostBySlug(slug: string): PostMeta | undefined {
     return _allPosts.find((p) => p.slug === slug);
+}
+
+/**
+ * 预热某篇文章的正文 chunk。失败不抛 —— 预取只是优化，真正打开时还会再走一次
+ * loadContent，那条路径才负责把错误反馈给用户。
+ */
+export function prefetchPostContent(slug: string): void {
+    const post = _allPosts.find((p) => p.slug === slug);
+    if (!post || _contentCache.has(slug)) return;
+    void post.loadContent().catch(() => {});
 }
 
 /** Group posts into { year → { month → posts[] } } for the Archive page */

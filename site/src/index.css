@@ -255,6 +255,31 @@ pre[data-block-style="display"] code.hljs {
 .enter-right-sm { animation-name: enterRightSm; }
 .enter-pop { animation-name: enterPop; animation-duration: 0.8s; }
 
+/* 首屏入场动画的「起跑线」。
+   WebKit（iPhone 上的 Safari 和 Chrome 都是）在解析 HTML 的途中就启动了 CSS 动画的时钟，
+   却要等解析完成、第一次渲染更新时才画出第一帧。文章 HTML 越大这段空窗越长，动画在
+   没人看得到的时候就播掉了一半甚至全部。index.html 的内联脚本会先给 <html> 挂上
+   entry-hold，让这几类动画停在起点，第一次渲染帧再放行。
+   只按住导航栏与首页/归档页 hero 里的小元素：正文这类大块内容若也被按在透明的起点，
+   WebKit 会认为首帧「没有内容」而推迟上屏，反而让整页更晚出现（实测晚 300ms 以上）。
+   那段脚本必须放在 <head> 里、先于正文被解析，才能赶在动画时钟启动前按住；
+   解析完仍找不到导航栏时也会放行，内容绝不会一直停在透明的起点。
+   react-snap 预渲染时不挂这个 class：快照里若带着它，禁用 JS 的访客会永远看不到导航栏。 */
+html.entry-hold :is(.nav-slide-down, .enter-up-sm, .enter-right-sm, .enter-pop) {
+  animation-play-state: paused;
+}
+
+/* 文章正文的 loading 占位。站内切换时会先保留当前页面最多 600ms（见 lib/article-html），
+   超时才进入文章页并显示它。正文若紧接着就到，占位只会露出一瞬间，正是要避免的那种闪烁；
+   所以再延后 200ms、淡入出现：随后就到的正文会在它可见之前把它替换掉。 */
+.loading-reveal {
+  animation: loadingReveal 200ms ease-out 200ms both;
+}
+@keyframes loadingReveal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .nav-slide-down,
   .enter-up,

@@ -8,6 +8,7 @@ import remarkGfm from 'remark-gfm';
 import remarkCjkFriendly from 'remark-cjk-friendly';
 import 'katex/dist/katex.min.css';
 import 'highlight.js/styles/github-dark.css';
+import { markdownRootClass, MARKDOWN_ROOT_ATTR } from './markdown-root';
 
 interface MarkdownRendererProps {
     content: string;
@@ -26,15 +27,6 @@ const getCodeBlockLanguage = (children: ReactNode) => {
     const match = codeElement.props.className?.match(/language-([\w-]+)/);
     return match?.[1]?.toLowerCase() ?? '';
 };
-
-/**
- * 正文根节点的样式与标记。
- * 首屏复用预渲染 DOM 时要生成一个完全相同的根节点，所以两处共用这份定义，
- * 避免哪天改了 class 而另一处没跟上，导致 hydration 不匹配。
- */
-export const markdownRootClass =
-    'prose prose-sm prose-slate dark:prose-invert max-w-none text-[0.9rem] sm:text-[14.5px] md:text-[15px] lg:text-[15.5px]';
-export const MARKDOWN_ROOT_ATTR = 'data-markdown-root';
 
 export function MarkdownRenderer({ content, className = '' }: MarkdownRendererProps) {
     return (

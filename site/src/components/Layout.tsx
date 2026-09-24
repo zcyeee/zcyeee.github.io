@@ -5,6 +5,7 @@ import { Home, BookOpen, Camera, Archive } from 'lucide-react';
 import { siteConfig } from '@/data/siteConfig';
 import { isReactSnapPrerender } from '@/lib/prerender';
 import { useSkipEntryAnimation } from '@/hooks/use-skip-entry-animation';
+import { usePostPrefetch } from '@/hooks/use-post-prefetch';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { getPostBySlug } from '@/content/posts-loader';
 
@@ -26,6 +27,8 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const location = useLocation();
+  // 正文与渲染栈都是按需加载的，靠意图预取把它们提前备好，站内切文章才不会闪 loading
+  usePostPrefetch();
   const currentPath = useMemo(() => normalizePath(location.pathname), [location.pathname]);
   const activeNavPath = currentPath.startsWith('/blog/') ? '/blog' : currentPath;
   const articleTitle = useMemo(() => {
