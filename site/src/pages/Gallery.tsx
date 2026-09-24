@@ -1,7 +1,7 @@
 import { motion, useReducedMotion, type Transition } from 'framer-motion';
 import { Calendar, Camera, MapPin, Maximize2, X } from 'lucide-react';
 import { AnimatedSection } from '@/components/AnimatedSection';
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, type CSSProperties } from 'react';
 import { photos, categories, type Photo } from '@/data/gallery';
 import { useSeo } from '@/hooks/use-seo';
 import { isReactSnapPrerender } from '@/lib/prerender';
@@ -238,8 +238,10 @@ export function Gallery() {
                           onMouseEnter={() => prefetchPreview(photo)}
                           onFocus={() => prefetchPreview(photo)}
                           aria-label={`查看大图：${photo.title}`}
-                          className="group relative block w-full overflow-hidden rounded-2xl border border-border/30 bg-muted text-left shadow-md outline-none transition-[border-color,box-shadow] duration-300 hover:border-primary/20 hover:shadow-xl hover:shadow-primary/10 focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-                          style={{ aspectRatio: photo.width / photo.height }}
+                          className="group relative block aspect-[var(--photo-ratio)] w-full overflow-hidden rounded-2xl border border-border/30 bg-muted text-left shadow-md outline-none transition-[border-color,box-shadow] duration-300 hover:border-primary/20 hover:shadow-xl hover:shadow-primary/10 focus-visible:ring-2 focus-visible:ring-ring/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                          // 不能直接写 aspectRatio：react-snap 的 Chromium 78 不认识它，快照里会被丢掉，
+                          // hydration 又不修正属性差异，线上就一直没有比例。自定义属性能原样留在快照里。
+                          style={{ '--photo-ratio': photo.width / photo.height } as CSSProperties}
                         >
                           <img
                             src={photo.src}

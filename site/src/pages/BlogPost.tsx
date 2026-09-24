@@ -1,4 +1,4 @@
-import { useParams, Link, useSearchParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { Calendar, Clock, ArrowLeft, Share2, Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,9 +12,10 @@ import { canReuseArticleHtml, getArticleHtmlSync, loadArticleHtml, waitForArticl
 import { getPostBySlug, sortedPosts } from '@/content/posts-loader';
 import { use, useState, useEffect, useMemo } from 'react';
 import { useSeo } from '@/hooks/use-seo';
+import { useHydrationSafeSearchParams } from '@/hooks/use-hydration-safe-search-params';
 
 export function BlogPost() {
-    const [searchParams] = useSearchParams();
+    const searchParams = useHydrationSafeSearchParams();
     const { slug } = useParams<{ slug: string }>();
     const post = slug ? getPostBySlug(slug) : undefined;
     const isFromArchive = searchParams.get('from') === 'archive';

@@ -19,6 +19,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { sortedPosts } from '@/content/posts-loader';
 import { macroTags, CATEGORIES } from '@/data/blog';
 import { useSeo } from '@/hooks/use-seo';
+import { useHydrationSafeSearchParams } from '@/hooks/use-hydration-safe-search-params';
 
 // Top tags from actual posts
 // const allTags = sortedPosts.flatMap((p) => p.tags);
@@ -32,6 +33,7 @@ import { useSeo } from '@/hooks/use-seo';
 export function Blog() {
   useSeo({ title: 'Blog', description: '大语言模型、强化学习与工程实践的学习笔记与长文整理。', path: '/blog' });
   const [searchParams, setSearchParams] = useSearchParams();
+  const renderedSearchParams = useHydrationSafeSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('全部');
   const isMobile = useIsMobile();
@@ -73,7 +75,7 @@ export function Blog() {
   });
 
   const totalPages = Math.ceil(filteredPosts.length / itemsPerPage);
-  const rawPage = Number(searchParams.get('page'));
+  const rawPage = Number(renderedSearchParams.get('page'));
   const parsedPage = Number.isFinite(rawPage) && rawPage >= 1 ? rawPage : 1;
   const currentPage = totalPages > 0 ? Math.min(parsedPage, totalPages) : 1;
   const scrollKey = `blogScrollY:${currentPage}`;

@@ -6,6 +6,7 @@ import { siteConfig } from '@/data/siteConfig';
 import { isReactSnapPrerender } from '@/lib/prerender';
 import { useSkipEntryAnimation } from '@/hooks/use-skip-entry-animation';
 import { usePostPrefetch } from '@/hooks/use-post-prefetch';
+import { useHydrationSafeSearchParams } from '@/hooks/use-hydration-safe-search-params';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { getPostBySlug } from '@/content/posts-loader';
 
@@ -27,6 +28,7 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const location = useLocation();
+  const searchParams = useHydrationSafeSearchParams();
   // 正文与渲染栈都是按需加载的，靠意图预取把它们提前备好，站内切文章才不会闪 loading
   usePostPrefetch();
   const currentPath = useMemo(() => normalizePath(location.pathname), [location.pathname]);
@@ -44,9 +46,9 @@ export function Layout({ children }: LayoutProps) {
   const blogNavTarget = useMemo(() => {
     if (!currentPath.startsWith('/blog/')) return '/blog';
 
-    const page = Number(new URLSearchParams(location.search).get('page'));
+    const page = Number(searchParams.get('page'));
     return Number.isInteger(page) && page > 1 ? `/blog?page=${page}` : '/blog';
-  }, [currentPath, location.search]);
+  }, [currentPath, searchParams]);
   /** react-snap 拍快照时：UA 为 ReactSnap，只输出静态壳 */
   const isSnap = isReactSnapPrerender();
   /** 首屏不重播入场动画，避免快照已画好的导航栏又滑入一次 */
@@ -174,8 +176,10 @@ export function Layout({ children }: LayoutProps) {
 
   const handleHeaderAnimationEnd = useCallback((event: React.AnimationEvent<HTMLElement>) => {
     if (event.target !== event.currentTarget || event.animationName !== 'navSlideDown') return;
+    // 快照里的导航项必须停在静态 div：hydration 首帧渲染的是它，motion.div 会多出 tabindex
+    if (isSnap) return;
     enableNavMotionOnce();
-  }, [enableNavMotionOnce]);
+  }, [enableNavMotionOnce, isSnap]);
 
   const navItems = useMemo(() => siteConfig.navItems.map(item => ({
     ...item,
