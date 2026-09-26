@@ -90,7 +90,7 @@ zcyeee.github.io/      # 项目根目录
 │   ├── plugins/                   # 构建期 Vite 插件
 │   │   └── markdown-frontmatter.ts # 处理 *.md?frontmatter，只产出元数据
 │   ├── scripts/                   # 构建后处理（在 react-snap 之后执行）
-│   │   ├── tune-prerendered-assets.mjs # 摘掉快照里多余的 modulepreload
+│   │   ├── tune-prerendered-assets.mjs # 摘掉快照里多余的 modulepreload，主包改为首帧后加载
 │   │   └── generate-seo-files.mjs # 生成 sitemap / robots / rss
 │   ├── public/                    # 静态资源（直接复制到构建输出）
 │   ├── index.html                 # HTML 模板
@@ -319,6 +319,8 @@ excerpt: "一句话摘要，显示在文章卡片上。"
 当前博客采用「**SSG 预渲染 + 客户端 Hydration + Markdown 分层加载**」：
 
 - **构建阶段（SSG）**：`react-snap` 会抓取站内路由并输出对应静态 HTML，提升首屏可见性与收录友好度
+- **首帧**：只依赖 HTML 与 CSS。主包在首帧画出来之后才请求，首页头像也懒加载，窄带宽下不和 CSS 抢带宽
+  （国内手机直连 GitHub Pages 常常只有每秒几十 KB，原先主包排在 CSS 前面，白屏可达 5–8 秒）
 - **接管阶段（Hydration）**：浏览器加载 JS 后对预渲染 HTML 进行接管，保留现有交互与动画效果
   - 文章页首屏直接复用预渲染好的正文 DOM，跳过 Markdown / KaTeX / 高亮的重算
   - 导航栏与首页 hero 的入场动画由 `index.html` 里的内联脚本按住，等第一次渲染帧再起跑

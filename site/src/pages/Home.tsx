@@ -79,9 +79,12 @@ export function Home() {
                 style={entryDelay(0.0)}
               >
                 <div className="w-28 h-28 md:w-32 md:h-32 lg:w-40 lg:h-40 rounded-full overflow-hidden ring-4 ring-primary/20 shadow-2xl">
+                  {/* 首屏图片也刻意懒加载：请求推迟到首次布局之后，窄带宽下不和阻塞渲染的 CSS 抢带宽 */}
                   <img
                     src={personalInfo.avatar}
                     alt={personalInfo.name}
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover"
                   />
                 </div>
