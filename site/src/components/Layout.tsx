@@ -309,9 +309,6 @@ export function Layout({ children }: LayoutProps) {
       {/* Background Effects */}
       <div className="fixed inset-0 pointer-events-none z-0">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.045),transparent_34%),radial-gradient(circle_at_85%_15%,hsl(var(--accent)/0.24),transparent_30%),linear-gradient(135deg,hsl(var(--background)),hsl(var(--secondary)/0.22)_48%,hsl(var(--background)))] dark:bg-[radial-gradient(circle_at_top_left,hsl(var(--primary)/0.045),transparent_34%),radial-gradient(circle_at_85%_10%,hsl(var(--accent)/0.08),transparent_30%),linear-gradient(135deg,hsl(var(--background)),hsl(var(--background))_48%,hsl(var(--muted)/0.16))]" />
-        <div className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-primary/5 dark:bg-primary/5 rounded-full blur-[120px]" />
-        <div className="absolute top-1/3 -left-40 w-[400px] h-[400px] bg-accent/20 dark:bg-accent/5 rounded-full blur-[100px]" />
-        <div className="absolute -bottom-40 right-1/4 w-[400px] h-[400px] bg-secondary/30 dark:bg-muted/10 rounded-full blur-[100px]" />
         <div className="absolute inset-0 bg-[linear-gradient(to_bottom,hsl(var(--background)/0.15),hsl(var(--background)/0.78))]" />
       </div>
 
@@ -348,7 +345,7 @@ export function Layout({ children }: LayoutProps) {
                   const isActive = item.normalizedPath === activeNavPath;
                   const Icon = item.icon;
                   const itemClassName = `
-                          relative flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors
+                          relative flex items-center gap-1.5 sm:gap-2 px-3 min-[386px]:px-2.5 sm:px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors
                           ${isActive
                             ? 'text-primary'
                             : 'text-muted-foreground hover:text-foreground'
@@ -372,7 +369,7 @@ export function Layout({ children }: LayoutProps) {
                               className="absolute inset-0 rounded-full z-0 pointer-events-none bg-[hsl(var(--primary)/0.12)] shadow-sm shadow-primary/10 dark:bg-[hsl(var(--primary)/0.18)]"
                             />
                           )}
-                          <Icon className="w-4 h-4 relative z-10" />
+                          <Icon className="hidden min-[386px]:block w-4 h-4 relative z-10" />
                           <span className="relative z-10">{item.label}</span>
                         </div>
                       ) : (
@@ -388,7 +385,7 @@ export function Layout({ children }: LayoutProps) {
                               className="absolute inset-0 rounded-full z-0 pointer-events-none bg-[hsl(var(--primary)/0.12)] shadow-sm shadow-primary/10 dark:bg-[hsl(var(--primary)/0.18)]"
                             />
                           )}
-                          <Icon className="w-4 h-4 relative z-10" />
+                          <Icon className="hidden min-[386px]:block w-4 h-4 relative z-10" />
                           <span className="relative z-10">{item.label}</span>
                         </motion.div>
                       )}
