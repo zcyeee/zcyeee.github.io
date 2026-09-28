@@ -325,11 +325,14 @@ excerpt: "一句话摘要，显示在文章卡片上。"
   - 文章页首屏直接复用预渲染好的正文 DOM，跳过 Markdown / KaTeX / 高亮的重算
   - 导航栏与首页 hero 的入场动画由 `index.html` 里的内联脚本按住，等第一次渲染帧再起跑
     （WebKit 会在解析途中就启动动画时钟，不按住的话在 iPhone 上会被吃掉）
-  - hydration 首帧必须与快照一致，否则 React 会丢掉整棵预渲染 DOM 重画（手机上阻塞一秒以上）：
+  - hydration 首帧要与快照一致。文本对不上时，React 会丢掉整棵预渲染 DOM 重新渲染；
+    属性对不上时，React 不会修正，快照里的旧值会一直留在页面上：
     - 快照按路径拍、不带查询参数，依赖 `?page=` / `?from=` 的渲染一律经 `useHydrationSafeSearchParams`，首帧视为无参数
-    - react-snap 的 `minifyHtml` 保持关闭：html-minifier 无论怎么配置都会改写 `class` 里的空白
     - 快照在 `<html data-prerender-route>` 记下自己的路径；与当前地址不符（如 404 页被用于不存在的文章）时改为客户端渲染
-    - react-snap 自带 Chromium 78，不认识的 CSS 属性（如 `aspect-ratio`）写在内联样式里会从快照中丢失，改用 CSS 变量传值
+    - react-snap 自带 Chromium 78，不认识的 CSS 属性（如 `aspect-ratio`）写在内联样式里会从快照中丢失，
+      hydration 也不会补回来，改用 CSS 变量传值
+    - react-snap 的 `minifyHtml` 保持关闭：html-minifier 无论怎么配置都会改写 `class` 里的空白。
+      这只会让开发版报属性不一致的警告，不影响线上；关掉是为了不让这类警告淹没真正的 hydration 问题
 - **站内切换文章**：直接拉取目标文章的预渲染 HTML（压缩后 8–48 KB），取出正文按同样方式渲染，
   与直接打开逐字节一致；链接在视口停留或被 hover / touch 时预取，真正点开某篇时其余预取让出带宽。
   正文未到时最多保留当前页面 600ms

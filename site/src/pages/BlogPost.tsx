@@ -135,6 +135,9 @@ export function BlogPost() {
         ? sortedPosts.filter((p) => p.slug !== slug && p.category === post.category).slice(0, 3)
         : [];
     const hoverTransition = { duration: 0.28, ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number] };
+    // 正文到之前不渲染文末的分享栏和相关文章：加载占位很矮，它们会先在首屏出现，正文一到又被推出屏幕
+    const isContentPending =
+        articleHtml === null && !loadError && (!useMarkdown || content === null || Renderer === null);
 
     // 站内切换过来、正文还没到：挂起，让 React 在这次导航（transition）里继续显示当前页面，
     // 正文到了再一起切过来，而不是先闪一下 loading。最多等多久见 lib/article-html。
@@ -224,37 +227,39 @@ export function BlogPost() {
                         </Card>
                     </AnimatedSection>
 
-                    {/* Actions — shown immediately, don't wait for content */}
-                    <AnimatedSection delay={0.3}>
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mt-8 pt-6 border-t">
-                            <div className="flex gap-2 flex-shrink-0">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="gap-1"
-                                    onClick={() => {
-                                        if (navigator.share) {
-                                            navigator.share({ title: post.title, url: window.location.href });
-                                        } else {
-                                            navigator.clipboard.writeText(window.location.href);
-                                        }
-                                    }}
-                                >
-                                    <Share2 className="w-4 h-4" />
-                                    分享
-                                </Button>
+                    {/* Actions */}
+                    {!isContentPending && (
+                        <AnimatedSection>
+                            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 mt-8 pt-6 border-t">
+                                <div className="flex gap-2 flex-shrink-0">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="gap-1"
+                                        onClick={() => {
+                                            if (navigator.share) {
+                                                navigator.share({ title: post.title, url: window.location.href });
+                                            } else {
+                                                navigator.clipboard.writeText(window.location.href);
+                                            }
+                                        }}
+                                    >
+                                        <Share2 className="w-4 h-4" />
+                                        分享
+                                    </Button>
+                                </div>
+                                <div className="flex flex-wrap gap-2 min-w-0">
+                                    {post.tags.map((tag) => (
+                                        <Badge key={tag} variant="secondary">{tag}</Badge>
+                                    ))}
+                                </div>
                             </div>
-                            <div className="flex flex-wrap gap-2 min-w-0 sm:justify-end">
-                                {post.tags.map((tag) => (
-                                    <Badge key={tag} variant="secondary">{tag}</Badge>
-                                ))}
-                            </div>
-                        </div>
-                    </AnimatedSection>
+                        </AnimatedSection>
+                    )}
 
                     {/* Related Posts */}
-                    {relatedPosts.length > 0 && (
-                        <AnimatedSection delay={0.4}>
+                    {!isContentPending && relatedPosts.length > 0 && (
+                        <AnimatedSection>
                             <div className="mt-10">
                                 <h2 className="text-lg sm:text-xl font-semibold mb-4">相关文章</h2>
                                 <div className="space-y-3">
@@ -265,7 +270,11 @@ export function BlogPost() {
                                             whileTap={{ scale: 0.985 }}
                                             transition={hoverTransition}
                                         >
-                                            <Link to={`/blog/${related.slug}${relatedSuffix}`}>
+                                            <Link
+                                                to={`/blog/${related.slug}${relatedSuffix}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                            >
                                                 <Card className="cursor-pointer border-border/40 hover:border-primary/30 hover:shadow-md hover:shadow-primary/10 transition-all duration-300">
                                                     <CardContent className="p-4 flex items-center justify-between">
                                                         <div>
