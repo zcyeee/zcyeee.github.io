@@ -42,13 +42,27 @@ export function parseFrontmatter(raw: string): Frontmatter {
   return { data, content };
 }
 
+// 只认行首的 <svg>：正文的行内代码里也会提到 `<svg>`，从那里起匹配会吞掉后面的正文
+const SVG_BLOCK = /^<svg\b[\s\S]*?^<\/svg>/gm;
+const REFERENCES_HEADING = /^(#{1,6})[ \t]*(?:参考资料|参考文献|References)[ \t]*$/m;
+
+/** 去掉参考资料一节：从该标题到下一个同级或更高级标题（没有则到文末） */
+function stripReferences(content: string): string {
+  const heading = REFERENCES_HEADING.exec(content);
+  if (!heading) return content;
+  const rest = content.slice(heading.index + heading[0].length);
+  const next = new RegExp(`^#{1,${heading[1].length}}\\s`, 'm').exec(rest);
+  return content.slice(0, heading.index) + (next ? rest.slice(next.index) : '');
+}
+
 /**
  * 按中西文分别估算阅读时长。CJK 按 300 字/分钟，西文按 200 词/分钟，下限 1 分钟。
+ * 内联 SVG 与参考资料不计入：前者的坐标和样式属性会被当成大量西文单词。
  * frontmatter 里显式写了 readTime 的文章不走这里。
  */
 export function calculateReadTime(content: string): string {
   // 粗略去掉 markdown 符号，让字数统计更接近正文
-  const text = content.replace(/[#*`~_>-]/g, '');
+  const text = stripReferences(content.replace(SVG_BLOCK, '')).replace(/[#*`~_>-]/g, '');
 
   const cjkCount = (text.match(/[\u4e00-\u9fa5\u3040-\u30ff\uac00-\ud7af]/g) || []).length;
   const westernCount = (text.match(/[a-zA-Z0-9]+/g) || []).length;
