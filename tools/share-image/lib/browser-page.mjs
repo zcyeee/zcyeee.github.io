@@ -56,6 +56,22 @@ export function prepareForExport({ barHeight }) {
     const related = [...document.querySelectorAll('main h2')].find((h) => h.textContent.includes('相关文章'));
     hide(related?.closest('.mt-10')?.parentElement ?? related?.closest('.mt-10'));
 
+    // Drop the reference list together with the rule that introduces it.
+    // Skipped blocks are tagged so the measuring code leaves them out as well.
+    const skip = (el) => { el.dataset.shareSkip = ''; el.style.display = 'none'; };
+    const level = (el) => Number(/^H([1-6])$/.exec(el.tagName)?.[1] ?? 0);
+    const proseBlocks = [...document.querySelector('.prose').children];
+    proseBlocks
+        .filter((el) => level(el) && /^(参考资料|参考文献|references?)$/i.test(el.textContent.trim()))
+        .forEach((heading) => {
+            if (heading.previousElementSibling?.tagName === 'HR') skip(heading.previousElementSibling);
+            let el = heading;
+            do {
+                skip(el);
+                el = el.nextElementSibling;
+            } while (el && !(level(el) && level(el) <= level(heading)));
+        });
+
     // Opaque bar pinned to the viewport bottom: carries the page number and
     // covers the sliver of the next page that the viewport would otherwise show.
     const bar = document.createElement('div');
@@ -86,7 +102,7 @@ export function measureBlocks() {
         return { top: rect.top + window.scrollY, bottom: rect.bottom + window.scrollY };
     };
 
-    const blocks = [...prose.children].map((el, index) => {
+    const blocks = [...prose.querySelectorAll(':scope > :not([data-share-skip])')].map((el, index) => {
         const { top, bottom } = offsets(el);
         const text = (el.textContent || '').trim();
         return {
@@ -107,7 +123,7 @@ export function measureBlocks() {
 
 /** Widens the gap at every seam so neither side of a cut looks cramped. */
 export function applyCutGaps({ indices, gap }) {
-    const children = [...document.querySelector('.prose').children];
+    const children = [...document.querySelector('.prose').querySelectorAll(':scope > :not([data-share-skip])')];
     indices.forEach((i) => {
         const next = children[i + 1];
         if (next) next.style.marginTop = `${gap}px`;

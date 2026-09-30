@@ -114,13 +114,14 @@ async function renderPost(options) {
     await fs.mkdir(outDir, { recursive: true });
 
     const site = await ensureSite({ siteDir: SITE_DIR, port: options.port, origin: options.origin, log: console.log });
-    const browser = await puppeteer.launch({
-        executablePath: await findChrome(),
-        headless: true,
-        args: ['--no-sandbox', '--font-render-hinting=none', '--hide-scrollbars'],
-    });
+    let browser;
 
     try {
+        browser = await puppeteer.launch({
+            executablePath: await findChrome(),
+            headless: true,
+            args: ['--no-sandbox', '--font-render-hinting=none', '--hide-scrollbars'],
+        });
         const page = await browser.newPage();
         await page.setViewport({ width, height: options.maxHeight, deviceScaleFactor: scale });
         await page.emulateMediaFeatures([{ name: 'prefers-color-scheme', value: theme }]);
@@ -190,7 +191,7 @@ async function renderPost(options) {
         }
         return { outDir, pages };
     } finally {
-        await browser.close();
+        await browser?.close();
         await site.stop();
     }
 }

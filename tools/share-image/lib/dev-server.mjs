@@ -1,4 +1,5 @@
 import { spawn } from 'node:child_process';
+import os from 'node:os';
 import path from 'node:path';
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -18,6 +19,25 @@ function stop(child) {
     } catch {
         child.kill('SIGTERM');
     }
+}
+
+/**
+ * Ties the server's lifetime to this process. Being detached, the server never
+ * sees a Ctrl+C aimed at us, and Node's default signal exit skips `finally`.
+ * Returns a function that stops the server and drops the hooks.
+ */
+function stopOnExit(child) {
+    const onExit = () => stop(child);
+    const onSignal = (signal) => process.exit(128 + os.constants.signals[signal]);
+    process.once('exit', onExit);
+    process.once('SIGINT', onSignal);
+    process.once('SIGTERM', onSignal);
+    return () => {
+        process.off('exit', onExit);
+        process.off('SIGINT', onSignal);
+        process.off('SIGTERM', onSignal);
+        stop(child);
+    };
 }
 
 /**
@@ -42,20 +62,24 @@ export async function ensureSite({ siteDir, port, origin, log = () => {} }) {
         detached: true,
         stdio: ['ignore', 'pipe', 'pipe'],
     });
+    const release = stopOnExit(child);
     let output = '';
     child.stdout.on('data', (chunk) => { output += chunk; });
     child.stderr.on('data', (chunk) => { output += chunk; });
 
     const deadline = Date.now() + 60000;
     while (Date.now() < deadline) {
-        if (child.exitCode !== null) throw new Error(`dev server 启动失败：\n${output.trim()}`);
+        if (child.exitCode !== null) {
+            release();
+            throw new Error(`dev server 启动失败：\n${output.trim()}`);
+        }
         if (await isUp(url)) {
             log(`已启动 dev server：${url}`);
-            return { origin: url, stop: async () => stop(child) };
+            return { origin: url, stop: async () => release() };
         }
         await sleep(300);
     }
 
-    stop(child);
+    release();
     throw new Error(`dev server 启动超时：\n${output.trim()}`);
 }
