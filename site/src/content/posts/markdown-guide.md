@@ -143,7 +143,7 @@ const getLatest = (posts: Post[]): Post =>
 
 ```bash
 # 安装依赖并启动
-cd personal_web/app
+cd zcyeee.github.io/site
 npm install
 npm run dev
 ```
@@ -152,7 +152,7 @@ npm run dev
 
 ```json
 {
-  "name": "my-app",
+  "name": "zcyeee-site",
   "version": "0.0.0",
   "scripts": {
     "dev": "vite",
