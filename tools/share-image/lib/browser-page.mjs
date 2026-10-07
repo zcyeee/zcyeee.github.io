@@ -17,8 +17,10 @@ export function prepareForExport({ barHeight }) {
         .prose div[style*="overflow-x"] > svg { min-width: 0 !important; width: 100% !important; height: auto !important; }
         .prose .overflow-x-auto { overflow: visible !important; }
         .prose .katex-display { overflow: visible !important; }
-        .prose table { table-layout: fixed; width: 100% !important; font-size: 12.5px !important; }
-        .prose th, .prose td { padding: 6px 8px !important; word-break: break-word !important; }
+        .prose table { table-layout: auto; width: 100% !important; font-size: 12.5px !important; }
+        .prose th, .prose td { padding: 6px 8px !important; overflow-wrap: break-word !important; }
+        .prose table[data-share-tight] { table-layout: fixed; }
+        .prose table[data-share-tight] :is(th, td) { overflow-wrap: anywhere !important; }
         #__share_spacer { height: 400px; }
     `;
     document.head.appendChild(style);
@@ -33,6 +35,39 @@ export function prepareForExport({ barHeight }) {
         if (!available || contentWidth <= available) return;
         const fontSize = parseFloat(getComputedStyle(display).fontSize);
         display.style.fontSize = `${fontSize * (available / contentWidth) * 0.98}px`;
+    });
+
+    // Columns are sized by content so inline formulas, which cannot wrap, get
+    // the width they need and words stay whole, shrinking the table down to a
+    // readable size if needed. Tables still too wide fall back to equal columns
+    // that break words anywhere, unless a formula would overflow its cell there;
+    // only then is the table shrunk further. Cell padding does not scale, hence
+    // several passes.
+    document.querySelectorAll('.prose table').forEach((table) => {
+        const available = table.parentElement.clientWidth;
+        const cells = [...table.querySelectorAll('th, td')];
+        const fitRatio = () => Math.min(
+            1,
+            (available + 0.5) / table.getBoundingClientRect().width,
+            ...cells.map((cell) => (cell.clientWidth + 1) / cell.scrollWidth),
+        );
+        const shrinkToFit = (minFont) => {
+            for (let pass = 0; pass < 6; pass += 1) {
+                const ratio = fitRatio();
+                if (ratio >= 1) return true;
+                const fontSize = parseFloat(getComputedStyle(table).fontSize);
+                if (fontSize <= minFont) return false;
+                const next = Math.max(minFont, fontSize * ratio * 0.98);
+                table.style.setProperty('font-size', `${next}px`, 'important');
+            }
+            return fitRatio() >= 1;
+        };
+        if (shrinkToFit(11)) return;
+        table.style.removeProperty('font-size');
+        table.dataset.shareTight = '';
+        if (fitRatio() >= 1) return;
+        delete table.dataset.shareTight;
+        shrinkToFit(0);
     });
 
     const hide = (el) => { if (el) el.style.display = 'none'; };

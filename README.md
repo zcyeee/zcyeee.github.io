@@ -4,7 +4,7 @@
 
 ## 在线预览
 
-🌐 网站地址：[https://zcyeee.github.io](https://zcyeee.github.io)
+🌐 网站地址：[https://chenyangzhang.com](https://chenyangzhang.com)（旧地址 [https://zcyeee.github.io](https://zcyeee.github.io) 会自动跳转）
 
 ---
 
@@ -483,34 +483,6 @@ git push -u origin main
   | `@` 或 `www` | CNAME | `<username>.github.io` |
 
 3. 在仓库 **Settings → Pages** 中填入自定义域名并勾选 **Enforce HTTPS**。
-
----
-
-
-
-## 常见问题
-
-**Q：页面刷新后出现 404？**
-
-A：项目当前已使用 BrowserRouter（无 `#` 链接）并在 GitHub Pages 上做了回退处理：
-
-- `public/404.html` 负责记录原始路径并回跳入口
-- `index.html` 会读取并恢复目标路径
-- 构建后还会生成 `200.html` 作为预渲染回退文件
-
-如果你改动了路由或部署根路径（`base`），请同步检查这两处逻辑。
-
-**Q：如何修改导航菜单？**
-
-A：编辑 `src/data/siteConfig.ts` 中的导航配置。
-
-**Q：如何添加新页面？**
-
-A：在 `src/pages/` 创建组件，然后在 `src/App.tsx` 中注册路由。
-
-**Q：如何修改网站配色？**
-
-A：编辑 `src/index.css` 中的 CSS 变量（`:root` 块），所有颜色、圆角、字体均由 CSS Token 统一控制。
 
 ---
 

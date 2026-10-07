@@ -17,7 +17,10 @@ const POSTS_DIR = path.join(SITE_DIR, 'src/content/posts');
 const DIST_DIR = path.join(SITE_DIR, 'dist');
 
 // 与 src/data/siteConfig.ts 保持一致
-const SITE_URL = 'https://zcyeee.github.io';
+const SITE_URL = 'https://chenyangzhang.com';
+// const SITE_URL = 'https://zcyeee.github.io';  // 旧地址，现由 GitHub 301 跳转到上面的自定义域名
+// RSS 阅读器按 guid 判断文章是否读过，guid 一旦变化，所有旧文章会重新显示为未读，所以固定用旧域名
+const RSS_GUID_BASE = 'https://zcyeee.github.io';
 const SITE_NAME = '张晨阳的个人主页';
 const SITE_DESC =
     '张晨阳的个人主页与技术博客，记录大语言模型、强化学习、位置编码与工程实践方面的学习笔记。';
@@ -105,7 +108,7 @@ ${posts
         (p) => `    <item>
       <title>${escapeXml(p.title)}</title>
       <link>${SITE_URL}/blog/${p.slug}</link>
-      <guid isPermaLink="true">${SITE_URL}/blog/${p.slug}</guid>
+      <guid isPermaLink="true">${RSS_GUID_BASE}/blog/${p.slug}</guid>
       <pubDate>${new Date(p.date).toUTCString()}</pubDate>
       <author>${escapeXml(AUTHOR)}</author>
       <description>${escapeXml(p.excerpt)}</description>

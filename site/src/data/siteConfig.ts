@@ -2,7 +2,8 @@ export const siteConfig = {
     author: "张晨阳",
     siteName: "张晨阳的个人主页",
     /** 用于生成 canonical / og:url / sitemap 的站点根地址，结尾不带斜杠 */
-    siteUrl: "https://zcyeee.github.io",
+    siteUrl: "https://chenyangzhang.com",
+    // siteUrl: "https://zcyeee.github.io",  // 旧地址，现由 GitHub 301 跳转到上面的自定义域名
     description:
         "张晨阳的个人主页与技术博客，记录大语言模型、强化学习、位置编码与工程实践方面的学习笔记。",
     /** 社交平台分享卡片的默认配图 */
