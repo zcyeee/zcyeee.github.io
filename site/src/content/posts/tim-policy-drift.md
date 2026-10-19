@@ -3,7 +3,7 @@ title: "训推不一致 & 策略更新漂移"
 date: "2026-08-24"
 tags: ["训推不一致", "策略更新漂移", "PPO"]
 category: "强化学习"
-excerpt: "rollout 数据与当前策略之间存在训推不一致与策略更新漂移两类差异。三策略 PPO 将二者解耦，并据此厘清 PPO clip、TIS、IcePop、GSPO 与 R3 的作用边界。"
+excerpt: "Rollout 数据与当前策略之间存在训推不一致与策略更新漂移两类差异。三策略 PPO 将二者解耦，并据此厘清 PPO clip、TIS、IcePop、GSPO 与 R3 的作用边界。"
 ---
 
 现代 LLM 强化学习系统通常不会用同一套执行栈完成 rollout 与训练：
