@@ -75,17 +75,15 @@ export function prepareForExport({ barHeight }) {
     hide(document.querySelector('body > div > footer'));
 
     const title = document.querySelector('main h1');
-    hide(title.nextElementSibling); // publish date and reading time
-    title.style.marginBottom = '0'; // that margin only existed to separate the two
+    // The line above the title reads "category · date · reading time"; keep only the category.
+    [...(title.previousElementSibling?.children ?? [])].slice(1).forEach(hide);
 
-    // Pull the article card up towards the title, which now ends the header.
+    // Pull the article card up towards the title, which ends the header.
     const header = title.closest('section');
     header.style.paddingBottom = '0';
     if (header.nextElementSibling) header.nextElementSibling.style.paddingTop = '12px';
 
     const buttons = [...document.querySelectorAll('main button')];
-    const backButton = buttons.find((b) => b.textContent.includes('返回'));
-    hide(backButton?.closest('a')?.parentElement);
     const shareButton = buttons.find((b) => b.textContent.includes('分享'));
     hide(shareButton?.closest('.mt-8')?.parentElement ?? shareButton?.closest('.mt-8'));
     const related = [...document.querySelectorAll('main h2')].find((h) => h.textContent.includes('相关文章'));

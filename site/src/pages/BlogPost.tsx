@@ -1,16 +1,17 @@
 import { useParams, Link } from 'react-router-dom';
-import { Calendar, Clock, ArrowLeft, Share2, Loader2 } from 'lucide-react';
+import { ArrowLeft, Share2, Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { AnimatedSection } from '@/components/AnimatedSection';
+import { ArticleToc } from '@/components/ArticleToc';
 import { markdownRootClass, MARKDOWN_ROOT_ATTR } from '@/components/markdown-root';
 import { getMarkdownRendererSync, loadMarkdownRenderer } from '@/components/markdown-renderer-async';
 import { consumePrerenderedArticle } from '@/lib/prerendered-article';
 import { canReuseArticleHtml, getArticleHtmlSync, loadArticleHtml, waitForArticleHtml } from '@/lib/article-html';
 import { getPostBySlug, sortedPosts } from '@/content/posts-loader';
-import { use, useState, useEffect, useMemo } from 'react';
+import { use, useState, useEffect, useMemo, useRef } from 'react';
 import { useSeo } from '@/hooks/use-seo';
 import { useHydrationSafeSearchParams } from '@/hooks/use-hydration-safe-search-params';
 
@@ -67,6 +68,7 @@ export function BlogPost() {
     const loadError = slug
         ? loadErrors[slug] === true || (Renderer === null && rendererErrors[slug] === true)
         : false;
+    const articleRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (!post || !slug || articleHtml !== null || useMarkdown) return;
@@ -138,6 +140,7 @@ export function BlogPost() {
     // 正文到之前不渲染文末的分享栏和相关文章：加载占位很矮，它们会先在首屏出现，正文一到又被推出屏幕
     const isContentPending =
         articleHtml === null && !loadError && (!useMarkdown || content === null || Renderer === null);
+    const tocKey = isContentPending || loadError ? null : `${slug}:${articleHtml === null ? 'markdown' : 'html'}`;
 
     // 站内切换过来、正文还没到：挂起，让 React 在这次导航（transition）里继续显示当前页面，
     // 正文到了再一起切过来，而不是先闪一下 loading。最多等多久见 lib/article-html。
@@ -165,68 +168,62 @@ export function BlogPost() {
 
     return (
         <div className="min-h-screen pb-6">
-            {/* Header — metadata is always available immediately (sync) */}
-            <section className="py-4">
-                <div className="max-w-3xl md:max-w-4xl lg:max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <AnimatedSection>
-                        <Link to={backToList}>
-                            <Button variant="ghost" size="sm" className="gap-1 mb-4">
-                                <ArrowLeft className="w-4 h-4" />
-                                {backButtonText}
-                            </Button>
-                        </Link>
-                    </AnimatedSection>
+            {/* 目录吸附的活动范围：从页头顶端到正文卡片底边。页面一打开目录就已停在吸附位置，
+                读完正文才随卡片底边离开，所以文末的分享栏和相关文章不能放进这个容器 */}
+            <div ref={articleRef} className="relative">
+                <ArticleToc contentRef={articleRef} contentKey={tocKey} />
 
-                    <AnimatedSection delay={0.1}>
-                        <div className="px-4 md:px-6">
-                            <div className="flex flex-wrap gap-2 mb-4">
-                                <Badge>{post.category}</Badge>
-                                {post.tags.map((tag) => (
-                                    <Badge key={tag} variant="secondary">{tag}</Badge>
-                                ))}
+                {/* Header — metadata is always available immediately (sync).
+                    不放返回按钮：导航栏的「博客」「归档」去的是同一个地方（博客还带着页码）；
+                    标签在文末分享栏里有完整一份，这里只留分类 */}
+                <section className="py-4">
+                    <div className="max-w-3xl md:max-w-4xl lg:max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <AnimatedSection>
+                            <div className="px-4 md:px-6">
+                                <p className="mb-3 flex flex-wrap items-center gap-x-2 text-xs sm:text-sm text-muted-foreground">
+                                    <span className="font-medium text-primary">{post.category}</span>
+                                    <span aria-hidden="true">·</span>
+                                    <time dateTime={post.date}>{post.date}</time>
+                                    <span aria-hidden="true">·</span>
+                                    <span>{post.readTime}</span>
+                                </p>
+                                <h1 className="text-2xl md:text-3xl font-bold">{post.title}</h1>
                             </div>
-                            <h1 className="text-2xl md:text-3xl font-bold mb-3">{post.title}</h1>
-                            <div className="flex items-center gap-4 text-xs sm:text-sm text-muted-foreground">
-                                <span className="flex items-center gap-1">
-                                    <Calendar className="w-4 h-4" />
-                                    {post.date}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                    <Clock className="w-4 h-4" />
-                                    {post.readTime}
-                                </span>
-                            </div>
-                        </div>
-                    </AnimatedSection>
-                </div>
-            </section>
+                        </AnimatedSection>
+                    </div>
+                </section>
 
-            {/* Content — lazy-loaded, shows spinner until the chunk arrives */}
-            <section className="pt-4 pb-0">
+                {/* Content — lazy-loaded, shows spinner until the chunk arrives */}
+                <section className="pt-4 pb-0">
+                    <div className="max-w-3xl md:max-w-4xl lg:max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <AnimatedSection delay={0.1}>
+                            <Card className="border-border/50 bg-card/90 shadow-md shadow-primary/5 dark:bg-card/80 dark:shadow-black/20">
+                                <CardContent className="p-4 md:p-6">
+                                    {articleHtml !== null ? (
+                                        <div
+                                            {...{ [MARKDOWN_ROOT_ATTR]: '' }}
+                                            className={`${markdownRootClass} `}
+                                            dangerouslySetInnerHTML={{ __html: articleHtml }}
+                                        />
+                                    ) : loadError ? (
+                                        <p className="text-destructive text-sm">内容加载失败，请刷新页面重试。</p>
+                                    ) : !useMarkdown || content === null || Renderer === null ? (
+                                        <div className="loading-reveal flex items-center justify-center py-20 text-muted-foreground">
+                                            <Loader2 className="w-6 h-6 animate-spin mr-2" />
+                                            加载内容中…
+                                        </div>
+                                    ) : (
+                                        <Renderer content={content} />
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </AnimatedSection>
+                    </div>
+                </section>
+            </div>
+
+            <section>
                 <div className="max-w-3xl md:max-w-4xl lg:max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <AnimatedSection delay={0.2}>
-                        <Card className="border-border/50 bg-card/90 shadow-md shadow-primary/5 dark:bg-card/80 dark:shadow-black/20">
-                            <CardContent className="p-4 md:p-6">
-                                {articleHtml !== null ? (
-                                    <div
-                                        {...{ [MARKDOWN_ROOT_ATTR]: '' }}
-                                        className={`${markdownRootClass} `}
-                                        dangerouslySetInnerHTML={{ __html: articleHtml }}
-                                    />
-                                ) : loadError ? (
-                                    <p className="text-destructive text-sm">内容加载失败，请刷新页面重试。</p>
-                                ) : !useMarkdown || content === null || Renderer === null ? (
-                                    <div className="loading-reveal flex items-center justify-center py-20 text-muted-foreground">
-                                        <Loader2 className="w-6 h-6 animate-spin mr-2" />
-                                        加载内容中…
-                                    </div>
-                                ) : (
-                                    <Renderer content={content} />
-                                )}
-                            </CardContent>
-                        </Card>
-                    </AnimatedSection>
-
                     {/* Actions */}
                     {!isContentPending && (
                         <AnimatedSection>

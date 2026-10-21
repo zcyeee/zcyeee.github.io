@@ -4,6 +4,7 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import rehypeHighlight from 'rehype-highlight';
 import rehypeRaw from 'rehype-raw';
+import rehypeSlug from 'rehype-slug';
 import remarkGfm from 'remark-gfm';
 import remarkCjkFriendly from 'remark-cjk-friendly';
 import 'katex/dist/katex.min.css';
@@ -33,31 +34,32 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
         <div {...{ [MARKDOWN_ROOT_ATTR]: '' }} className={`${markdownRootClass} ${className}`}>
             <ReactMarkdown
                 remarkPlugins={[remarkGfm, remarkCjkFriendly, remarkMath]}
-                rehypePlugins={[rehypeRaw, rehypeKatex, rehypeHighlight]}
+                // rehypeSlug 必须排在 rehypeKatex 之前：标题里的公式此时还是 TeX 原文，生成的 id 才干净
+                rehypePlugins={[rehypeRaw, rehypeSlug, rehypeKatex, rehypeHighlight]}
                 components={{
                     // Markdown # → rendered as <h2> (page title already occupies <h1>)
-                    h1: ({ children }) => (
-                        <h2 className="text-xl sm:text-[22px] font-bold mt-5 mb-3">{children}</h2>
+                    h1: ({ id, children }) => (
+                        <h2 id={id} className="text-xl sm:text-[22px] font-bold mt-5 mb-3">{children}</h2>
                     ),
                     // Markdown ## → <h3>
-                    h2: ({ children }) => (
-                        <h3 className="text-lg sm:text-[1.15rem] font-semibold mt-4 mb-2">{children}</h3>
+                    h2: ({ id, children }) => (
+                        <h3 id={id} className="text-lg sm:text-[1.15rem] font-semibold mt-4 mb-2">{children}</h3>
                     ),
                     // Markdown ### → <h4>
-                    h3: ({ children }) => (
-                        <h4 className="text-base sm:text-[1.05rem] font-semibold mt-5 mb-2">{children}</h4>
+                    h3: ({ id, children }) => (
+                        <h4 id={id} className="text-base sm:text-[1.05rem] font-semibold mt-5 mb-2">{children}</h4>
                     ),
                     // Markdown #### → <h5>
-                    h4: ({ children }) => (
-                        <h5 className="text-sm sm:text-[15px] font-medium mt-4 mb-2">{children}</h5>
+                    h4: ({ id, children }) => (
+                        <h5 id={id} className="text-sm sm:text-[15px] font-medium mt-4 mb-2">{children}</h5>
                     ),
                     // Markdown ##### → <h6>
-                    h5: ({ children }) => (
-                        <h6 className="text-xs sm:text-[13.5px] font-medium mt-3 mb-1">{children}</h6>
+                    h5: ({ id, children }) => (
+                        <h6 id={id} className="text-xs sm:text-[13.5px] font-medium mt-3 mb-1">{children}</h6>
                     ),
                     // Markdown ###### → <h6> (smallest)
-                    h6: ({ children }) => (
-                        <h6 className="text-xs sm:text-[13.5px] font-medium mt-3 mb-1 text-muted-foreground">{children}</h6>
+                    h6: ({ id, children }) => (
+                        <h6 id={id} className="text-xs sm:text-[13.5px] font-medium mt-3 mb-1 text-muted-foreground">{children}</h6>
                     ),
                     // Inline code (not inside a code block)
                     code: ({ className: cls, children, ...props }) => {

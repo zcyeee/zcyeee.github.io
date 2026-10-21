@@ -75,6 +75,8 @@ export function Layout({ children }: LayoutProps) {
   const [showArticleTitle, setShowArticleTitle] = useState(false);
 
   useEffect(() => {
+    // 带章节锚点打开时（如从目录里复制的链接），浏览器已经滚到了那个标题，不能再拉回顶部
+    if (window.location.hash) return;
     const restorePage = sessionStorage.getItem('blogScrollRestorePage');
     if (location.pathname === '/blog' && restorePage) return;
     const restoreArchive = sessionStorage.getItem('archiveScrollRestore');

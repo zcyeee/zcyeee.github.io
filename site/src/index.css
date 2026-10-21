@@ -117,6 +117,11 @@
   margin-inline: auto;
 }
 
+/* 从目录跳到某一节时，标题停在固定导航栏下方，而不是被它盖住 */
+[data-markdown-root] > :is(h2, h3)[id] {
+  scroll-margin-top: 5.5rem;
+}
+
 /* Code block styles */
 pre {
   @apply rounded-lg border border-border/60 p-4 shadow-sm overflow-x-auto text-xs sm:text-sm;
@@ -280,6 +285,24 @@ html.entry-hold :is(.nav-slide-down, .enter-up-sm, .enter-right-sm, .enter-pop) 
   to { opacity: 1; }
 }
 
+/* 文章目录要等挂载后量完标题才出现（见 ArticleToc），淡入，不要突然冒出来 */
+.toc-reveal {
+  animation: tocReveal 300ms ease-out both;
+}
+@keyframes tocReveal {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* 文章目录的窗口：上下两端渐隐。渐隐区的长度由 ArticleToc 随目录转动实时写入，
+   哪一端已经转到头、没有更多内容了，那一端就是 0，不淡出 */
+.toc-wheel {
+  --toc-fade-top: 0%;
+  --toc-fade-bottom: 0%;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 var(--toc-fade-top), #000 calc(100% - var(--toc-fade-bottom)), transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 var(--toc-fade-top), #000 calc(100% - var(--toc-fade-bottom)), transparent);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .nav-slide-down,
   .enter-up,
@@ -289,7 +312,8 @@ html.entry-hold :is(.nav-slide-down, .enter-up-sm, .enter-right-sm, .enter-pop) 
   .enter-none,
   .enter-up-sm,
   .enter-right-sm,
-  .enter-pop {
+  .enter-pop,
+  .toc-reveal {
     animation: none;
   }
 
