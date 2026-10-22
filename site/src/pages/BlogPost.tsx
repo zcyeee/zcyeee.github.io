@@ -3,14 +3,13 @@ import { ArrowLeft, Share2, Loader2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { motion } from 'framer-motion';
 import { AnimatedSection } from '@/components/AnimatedSection';
 import { ArticleToc } from '@/components/ArticleToc';
 import { markdownRootClass, MARKDOWN_ROOT_ATTR } from '@/components/markdown-root';
 import { getMarkdownRendererSync, loadMarkdownRenderer } from '@/components/markdown-renderer-async';
 import { consumePrerenderedArticle } from '@/lib/prerendered-article';
 import { canReuseArticleHtml, getArticleHtmlSync, loadArticleHtml, waitForArticleHtml } from '@/lib/article-html';
-import { getPostBySlug, sortedPosts } from '@/content/posts-loader';
+import { getPostBySlug } from '@/content/posts-loader';
 import { use, useState, useEffect, useMemo, useRef } from 'react';
 import { useSeo } from '@/hooks/use-seo';
 import { useHydrationSafeSearchParams } from '@/hooks/use-hydration-safe-search-params';
@@ -27,14 +26,6 @@ export function BlogPost() {
             ? `/blog?page=${pageParam}`
             : '/blog';
     const backButtonText = isFromArchive ? '返回归档列表' : '返回博客列表';
-    const relatedParams = new URLSearchParams();
-    if (isFromArchive) {
-        relatedParams.set('from', 'archive');
-    } else if (Number.isFinite(pageParam) && pageParam > 1) {
-        relatedParams.set('page', String(pageParam));
-    }
-    const relatedSuffix = relatedParams.toString() ? `?${relatedParams.toString()}` : '';
-
     // 注意：站内从一篇文章跳到另一篇时，这个组件不会重新挂载，所以下面所有状态都必须按 slug 区分。
 
     // 首屏直接复用预渲染好的正文 DOM，跳过 Markdown 解析 / KaTeX / 代码高亮的重算。
@@ -132,12 +123,7 @@ export function BlogPost() {
             : { title: '文章未找到', path: slug ? `/blog/${slug}` : '/blog' }
     );
 
-    // Related posts: same category, exclude current, up to 3
-    const relatedPosts = post
-        ? sortedPosts.filter((p) => p.slug !== slug && p.category === post.category).slice(0, 3)
-        : [];
-    const hoverTransition = { duration: 0.28, ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number] };
-    // 正文到之前不渲染文末的分享栏和相关文章：加载占位很矮，它们会先在首屏出现，正文一到又被推出屏幕
+    // 正文到之前不渲染文末的分享栏：加载占位很矮，它会先在首屏出现，正文一到又被推出屏幕
     const isContentPending =
         articleHtml === null && !loadError && (!useMarkdown || content === null || Renderer === null);
     const tocKey = isContentPending || loadError ? null : `${slug}:${articleHtml === null ? 'markdown' : 'html'}`;
@@ -169,7 +155,7 @@ export function BlogPost() {
     return (
         <div className="min-h-screen pb-6">
             {/* 目录吸附的活动范围：从页头顶端到正文卡片底边。页面一打开目录就已停在吸附位置，
-                读完正文才随卡片底边离开，所以文末的分享栏和相关文章不能放进这个容器 */}
+                读完正文才随卡片底边离开，所以文末的分享栏不能放进这个容器 */}
             <div ref={articleRef} className="relative">
                 <ArticleToc contentRef={articleRef} contentKey={tocKey} />
 
@@ -225,8 +211,10 @@ export function BlogPost() {
             <section>
                 <div className="max-w-3xl md:max-w-4xl lg:max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
                     {/* Actions */}
+                    {/* 这是页面最后一块，滚到底也没法再往上走：入场前它下移了 60px，
+                        默认的 -100px 边距 + 15% 阈值可能永远达不到，只好露出一点就算进入视口 */}
                     {!isContentPending && (
-                        <AnimatedSection>
+                        <AnimatedSection margin="0px" amount="some">
                             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 mt-8 pt-6 border-t">
                                 <div className="flex gap-2 flex-shrink-0">
                                     <Button
@@ -248,41 +236,6 @@ export function BlogPost() {
                                 <div className="flex flex-wrap gap-2 min-w-0">
                                     {post.tags.map((tag) => (
                                         <Badge key={tag} variant="secondary">{tag}</Badge>
-                                    ))}
-                                </div>
-                            </div>
-                        </AnimatedSection>
-                    )}
-
-                    {/* Related Posts */}
-                    {!isContentPending && relatedPosts.length > 0 && (
-                        <AnimatedSection>
-                            <div className="mt-10">
-                                <h2 className="text-lg sm:text-xl font-semibold mb-4">相关文章</h2>
-                                <div className="space-y-3">
-                                    {relatedPosts.map((related) => (
-                                        <motion.div
-                                            key={related.slug}
-                                            whileHover={{ y: -4 }}
-                                            whileTap={{ scale: 0.985 }}
-                                            transition={hoverTransition}
-                                        >
-                                            <Link
-                                                to={`/blog/${related.slug}${relatedSuffix}`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                            >
-                                                <Card className="cursor-pointer border-border/40 hover:border-primary/30 hover:shadow-md hover:shadow-primary/10 transition-all duration-300">
-                                                    <CardContent className="p-4 flex items-center justify-between">
-                                                        <div>
-                                                            <p className="font-medium hover:text-primary transition-colors">{related.title}</p>
-                                                            <p className="text-xs text-muted-foreground mt-1">{`${related.date} · ${related.readTime}`}</p>
-                                                        </div>
-                                                        <Badge variant="secondary" className="ml-4 flex-shrink-0">{related.category}</Badge>
-                                                    </CardContent>
-                                                </Card>
-                                            </Link>
-                                        </motion.div>
                                     ))}
                                 </div>
                             </div>

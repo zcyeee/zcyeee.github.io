@@ -86,8 +86,6 @@ export function prepareForExport({ barHeight }) {
     const buttons = [...document.querySelectorAll('main button')];
     const shareButton = buttons.find((b) => b.textContent.includes('分享'));
     hide(shareButton?.closest('.mt-8')?.parentElement ?? shareButton?.closest('.mt-8'));
-    const related = [...document.querySelectorAll('main h2')].find((h) => h.textContent.includes('相关文章'));
-    hide(related?.closest('.mt-10')?.parentElement ?? related?.closest('.mt-10'));
 
     // Drop the reference list together with the rule that introduces it.
     // Skipped blocks are tagged so the measuring code leaves them out as well.

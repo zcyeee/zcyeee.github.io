@@ -92,6 +92,12 @@
   @apply inline-block px-1;
 }
 
+/* KaTeX 默认给 .katex 设了 1.21em 字号与 1.2 行高，行内公式的 inline-block 盒子
+   会把所在行（尤其是标题和列表项）撑高 1~2px */
+:not(.katex-display) > .katex {
+  line-height: 1;
+}
+
 .math-block {
   @apply block my-4 py-3 px-4 bg-muted/60 rounded-lg border border-border/50 overflow-x-auto;
 }

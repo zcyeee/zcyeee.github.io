@@ -30,7 +30,7 @@ export function capturePrerenderedArticle(): void {
     const root = document.querySelector(`[${MARKDOWN_ROOT_ATTR}]`);
     const slug = window.location.pathname.match(/\/blog\/([^/]+)\/?$/)?.[1];
     captured = root && slug ? { slug: decodeURIComponent(slug), html: root.innerHTML } : null;
-    // 离开后再回到这篇（返回列表再后退、从相关文章点回来）时直接用这份，不必重新请求
+    // 离开后再回到这篇（返回列表再后退、从别的文章点回来）时直接用这份，不必重新请求
     if (captured) rememberArticleHtml(captured.slug, captured.html);
 }
 

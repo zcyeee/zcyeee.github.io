@@ -328,7 +328,7 @@ export function Layout({ children }: LayoutProps) {
           <nav className="max-w-4xl mx-auto bg-card/95 backdrop-blur-xl rounded-full border border-border/60 shadow-lg shadow-primary/5 dark:shadow-black/25">
             <div ref={setNavContainerNode} className="relative grid overflow-hidden rounded-full">
               <div
-                className={`relative col-start-1 row-start-1 flex items-center justify-center gap-1 px-2 py-2 transition-[opacity,transform] duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
+                className={`relative col-start-1 row-start-1 flex items-center justify-center gap-1 px-2 py-2 transition-[opacity,transform] [transition-duration:420ms] [transition-timing-function:cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none ${
                   showArticleTitle ? '-translate-y-2 opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'
                 }`}
                 aria-hidden={showArticleTitle}
@@ -399,7 +399,7 @@ export function Layout({ children }: LayoutProps) {
 
               {articleTitle && (
                 <div
-                  className={`col-start-1 row-start-1 flex min-w-0 items-center justify-center gap-2 px-6 py-2 text-sm font-semibold transition-[opacity,transform] duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none md:text-[15px] ${
+                  className={`col-start-1 row-start-1 flex min-w-0 items-center justify-center gap-2 px-6 py-2 text-sm font-semibold transition-[opacity,transform] [transition-duration:420ms] [transition-timing-function:cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none md:text-[15px] ${
                     showArticleTitle
                       ? 'translate-y-0 opacity-100'
                       : 'translate-y-2 opacity-0 pointer-events-none'

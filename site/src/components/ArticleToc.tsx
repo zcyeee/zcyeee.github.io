@@ -125,13 +125,22 @@ function collectHeadings(container: HTMLElement | null): Omit<Collected, 'key'> 
 }
 
 function findActive(headings: HTMLElement[]): number {
+  if (headings.length === 0) return -1;
   const viewHeight = window.innerHeight;
-  // 滚到页底时，最后几节的标题可能永远到不了 ACTIVE_LINE，这时取视口里最靠下的那个
-  const atBottom = window.scrollY + viewHeight >= document.documentElement.scrollHeight - 2;
+  const remaining = Math.max(0, document.documentElement.scrollHeight - viewHeight - window.scrollY);
+  // 滚到页底时，最后几节的标题可能永远到不了 ACTIVE_LINE：
+  // 算出滚到底时最后一节离 ACTIVE_LINE 还差多少，在收尾这一程里把判定线平滑往下放，避免最后 2px 才跳变
+  const lastEndTop = headings[headings.length - 1].getBoundingClientRect().top - remaining;
+  const shortfall = Math.max(0, lastEndTop - ACTIVE_LINE);
+  const range = Math.max(shortfall, viewHeight * 0.35);
+  const line =
+    shortfall > 0 && remaining < range
+      ? ACTIVE_LINE + ((range - remaining) / range) * (shortfall + 2)
+      : ACTIVE_LINE;
+
   let active = -1;
   for (let i = 0; i < headings.length; i += 1) {
-    const top = headings[i].getBoundingClientRect().top;
-    if (top > ACTIVE_LINE && !(atBottom && top < viewHeight)) break;
+    if (headings[i].getBoundingClientRect().top > line) break;
     active = i;
   }
   return active;
@@ -144,6 +153,7 @@ export function ArticleToc({ contentRef, contentKey }: ArticleTocProps) {
   const [activeIndex, setActiveIndex] = useState(-1);
   /** 点目录跳转、页面平滑滚动期间，高亮停在点中的那一项，不跟着途经的各节闪 */
   const lockedIndexRef = useRef<number | null>(null);
+  const settleTimerRef = useRef(0);
   const windowRef = useRef<HTMLDivElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
   const rowRefs = useRef<(HTMLLIElement | null)[]>([]);
@@ -175,20 +185,19 @@ export function ArticleToc({ contentRef, contentKey }: ArticleTocProps) {
     if (!current) return;
     const { headings } = current;
     let frame = 0;
-    let settleTimer = 0;
 
     const update = () => {
       frame = 0;
       if (lockedIndexRef.current === null) setActiveIndex(findActive(headings));
     };
-    const settle = () => {
-      lockedIndexRef.current = null;
-      update();
-    };
     const schedule = () => {
       if (lockedIndexRef.current !== null) {
-        window.clearTimeout(settleTimer);
-        settleTimer = window.setTimeout(settle, 150);
+        window.clearTimeout(settleTimerRef.current);
+        // 平滑滚动停稳后只解锁，不重算 activeIndex：点在靠页底的小节时标题到不了 ACTIVE_LINE，
+        // 重算会把刚点中的高亮立刻跳走；解锁后下一次用户滚动会自然接管
+        settleTimerRef.current = window.setTimeout(() => {
+          lockedIndexRef.current = null;
+        }, 150);
       }
       if (frame === 0) frame = requestAnimationFrame(update);
     };
@@ -199,7 +208,7 @@ export function ArticleToc({ contentRef, contentKey }: ArticleTocProps) {
       window.removeEventListener('scroll', schedule);
       window.removeEventListener('resize', schedule);
       if (frame !== 0) cancelAnimationFrame(frame);
-      window.clearTimeout(settleTimer);
+      window.clearTimeout(settleTimerRef.current);
       lockedIndexRef.current = null;
     };
   }, [current]);
@@ -225,18 +234,24 @@ export function ArticleToc({ contentRef, contentKey }: ArticleTocProps) {
     return () => observer.disconnect();
   }, [current]);
 
-  // 把当前一节转到窗口中央。换文章后的第一次直接就位，不从上一篇的位置转过来
+  // 把当前一节转到窗口中央。换文章后的第一次直接就位，不从上一篇的位置转过来；
+  // 鼠标悬停在目录内时暂停随正文滚动的自动旋转，避免惯性滚动未停时条目在指针下移动
   useEffect(() => {
-    if (!wheel || browsing) return;
+    if (!wheel) return;
     const target = offsetFor(wheel, activeIndex);
-    if (placedKeyRef.current !== wheel.key || reduceMotion) {
+    if (placedKeyRef.current !== wheel.key) {
       placedKeyRef.current = wheel.key;
+      offset.set(target);
+      return;
+    }
+    if (browsing || hovering) return;
+    if (reduceMotion) {
       offset.set(target);
       return;
     }
     const controls = animate(offset, target, SPIN);
     return () => controls.stop();
-  }, [wheel, browsing, activeIndex, offset, reduceMotion]);
+  }, [wheel, browsing, hovering, activeIndex, offset, reduceMotion]);
 
   // 跟着位移更新两端的渐隐和球面弯曲。只在还有内容的那一端生效，强度随藏起来的长度渐变
   useEffect(() => {
@@ -305,12 +320,21 @@ export function ArticleToc({ contentRef, contentKey }: ArticleTocProps) {
     if (!heading) return;
     event.preventDefault();
     lockedIndexRef.current = index;
+    window.clearTimeout(settleTimerRef.current);
+    // 目标若已在位（不触发 scroll 事件），兜底解锁，免得锁一直留到下次滚动
+    settleTimerRef.current = window.setTimeout(() => {
+      lockedIndexRef.current = null;
+    }, 200);
     setActiveIndex(index);
     setBrowsing(false);
+    if (wheel) {
+      animate(offset, offsetFor(wheel, index), reduceMotion ? { duration: 0 } : SPIN);
+    }
     heading.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
   };
 
   const activeSection = activeItem?.section;
+  const indicatorIndex = Math.max(0, activeIndex);
 
   return (
     // 右边缘停在卡片左边缘（页面中线左侧 480px）再往左 28px；宽度扣掉这段距离和离视口左边的 20px
@@ -328,12 +352,16 @@ export function ArticleToc({ contentRef, contentKey }: ArticleTocProps) {
         {/* pl-1：窗口会裁切溢出，竖线上的高亮条比竖线宽，不留边会被切掉一半 */}
         <div ref={windowRef} className="toc-wheel h-[var(--toc-h)] overflow-hidden pl-1">
           <motion.div ref={listRef} style={{ y: offset }} className="relative border-l border-border">
-            {wheel && activeIndex >= 0 && (
+            {wheel && (
               <motion.span
                 aria-hidden="true"
                 className="absolute left-[-1.5px] top-0 w-0.5 rounded-full bg-primary"
                 initial={false}
-                animate={{ y: wheel.tops[activeIndex] + 4, height: Math.max(0, wheel.heights[activeIndex] - 8) }}
+                animate={{
+                  y: wheel.tops[indicatorIndex] + 4,
+                  height: Math.max(0, wheel.heights[indicatorIndex] - 8),
+                  opacity: activeIndex >= 0 ? 1 : 0,
+                }}
                 transition={reduceMotion ? { duration: 0 } : SPIN}
               />
             )}
@@ -365,7 +393,7 @@ export function ArticleToc({ contentRef, contentKey }: ArticleTocProps) {
                             : 'text-muted-foreground hover:text-foreground'
                       }`}
                     >
-                      <span className="line-clamp-2">{item.text}</span>
+                      <span className="line-clamp-2 break-words">{item.text}</span>
                     </a>
                   </li>
                 );
