@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/pagination";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { AnimatedSection } from '@/components/AnimatedSection';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { sortedPosts } from '@/content/posts-loader';
 import { macroTags, CATEGORIES } from '@/data/blog';
@@ -38,8 +38,8 @@ export function Blog() {
   const [selectedCategory, setSelectedCategory] = useState('全部');
   const isMobile = useIsMobile();
   const itemsPerPage = isMobile ? 5 : 8;
-  const blogListRef = useRef<HTMLDivElement>(null);
-  const shouldScrollRef = useRef(false);
+  const paginationRef = useRef<HTMLDivElement>(null);
+  const paginationTopRef = useRef<number | null>(null);
   const scrollRestoreKey = 'blogScrollRestorePage';
 
   const updatePageParam = (page: number) => {
@@ -53,14 +53,12 @@ export function Blog() {
   };
 
   const handleSearchChange = (value: string) => {
-    shouldScrollRef.current = true;
     setSearchQuery(value);
     updatePageParam(1);
   };
 
   const handleCategoryClick = (category: string) => {
     const nextCategory = selectedCategory === category ? '全部' : category;
-    shouldScrollRef.current = true;
     setSelectedCategory(nextCategory);
     updatePageParam(1);
   };
@@ -90,7 +88,8 @@ export function Blog() {
   };
 
   const handlePageChange = (page: number) => {
-    shouldScrollRef.current = true;
+    if (page === currentPage) return;
+    paginationTopRef.current = paginationRef.current?.getBoundingClientRect().top ?? null;
     updatePageParam(page);
   };
 
@@ -106,13 +105,14 @@ export function Blog() {
     sessionStorage.removeItem(scrollRestoreKey);
   }, [currentPage]);
 
-  useEffect(() => {
-    if (!shouldScrollRef.current) return;
-    shouldScrollRef.current = false;
-    if (!blogListRef.current) return;
-    requestAnimationFrame(() => {
-      blogListRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
+  // 末页条数少、卡片高度也不一，翻页后分页条会跟着上下移位；绘制前按它在视口里的
+  // 位置补回滚动量，让刚点的页码仍停在指针下方
+  useLayoutEffect(() => {
+    const previousTop = paginationTopRef.current;
+    paginationTopRef.current = null;
+    if (previousTop === null || !paginationRef.current) return;
+    const drift = paginationRef.current.getBoundingClientRect().top - previousTop;
+    if (drift !== 0) window.scrollBy({ top: drift, left: 0, behavior: 'auto' });
   }, [currentPage]);
 
   // Featured post: first post in sorted list
@@ -176,7 +176,7 @@ export function Blog() {
       </section>
 
       {/* Main Content */}
-      <section className="pt-6 md:pt-8 pb-0 scroll-mt-6" ref={blogListRef}>
+      <section className="pt-6 md:pt-8 pb-0">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
             {/* Blog Posts */}
@@ -245,7 +245,7 @@ export function Blog() {
 
               {/* Pagination */}
               {totalPages > 1 && (
-                <div className="mt-8">
+                <div className="mt-8" ref={paginationRef}>
                   <Pagination>
                     <PaginationContent>
                       <PaginationItem>
